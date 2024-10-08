@@ -12,18 +12,8 @@ fn main() {
     let mut cursor = Cursor::new(buffer);
 
     let test_tag_sequence = nbt::NbtTagSequence::new();
-    let mut test_tag = nbt::NbtTag::parse_from_buf(&mut cursor).unwrap();
-
-    println!("{:?}", test_tag);
-    println!("####################");
-    println!("{:?}", test_tag.next());
-    println!("{:?}", test_tag.next());
-
-    println!("{:?}", test_tag.next());
-
-    println!("{:?}", test_tag.next());
-
-    println!("{:?}", test_tag.next());
+    //let mut test_tag = nbt::NbtTag::parse_from_buf(&mut cursor).unwrap();
+    nbt::NbtTag::parse_from_buf(&mut cursor);
 
 
     //test_tag.iter().for_each(|x| println!("{:?}", x.byte_start()));

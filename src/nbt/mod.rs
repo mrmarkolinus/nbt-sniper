@@ -1,6 +1,6 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use core::str;
-use std::io::Cursor;
+use core::{panic, str};
+use std::io::{Cursor, Seek, SeekFrom};
 
 use thiserror::Error;
 use std::io;
@@ -31,8 +31,8 @@ pub enum NbtTagId {
     LongArray = 12,
 }
 
-pub struct NbtTagSequence<'a> {
-    tags: Vec<&'a NbtTag>,
+pub struct NbtTagSequence {
+    tags: Vec<NbtTag>,
 }
 
 
@@ -56,8 +56,8 @@ pub enum NbtTagType {
     Double(f64),
     ByteArray(Vec<i8>),
     String(String),
-    List(Vec<NbtTag>),
-    Compound(Vec<NbtTag>),
+    List(String), //only store the name of the list
+    Compound(String), //only store the name of the compound
     IntArray(Vec<i32>),
     LongArray(Vec<i64>),
 }
@@ -127,9 +127,9 @@ impl NbtTagId {
     }
 }   */
 
-impl<'a> NbtTagSequence<'a> {
-    pub fn new() -> NbtTagSequence<'a> {
-        NbtTagSequence { tags: Vec::<&NbtTag>::new() } 
+impl NbtTagSequence {
+    pub fn new() -> NbtTagSequence {
+        NbtTagSequence { tags: Vec::<NbtTag>::new() } 
     }
 }
 
@@ -164,7 +164,7 @@ impl<'a> NbtTagSequence<'a> {
 
 impl NbtTag {
 
-    pub fn next (&mut self) -> Option<&NbtTag> {
+    /* pub fn next (&mut self) -> Option<&NbtTag> {
         match self.value {
             NbtTagType::End(_) => None,
             NbtTagType::Compound(_) => {
@@ -182,7 +182,7 @@ impl NbtTag {
                 Some(self)
             },
         }
-    }
+    } */
 
 
     pub fn value(&self) -> &NbtTagType {
@@ -201,7 +201,7 @@ impl NbtTag {
         self.byte_end
     }
 
-    pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTag, NbtReadError> {
+    pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) { //-> Result<NbtTag, NbtReadError> {
     
 /*         let (nbt_root_present, 
             tag_id, 
@@ -220,51 +220,64 @@ impl NbtTag {
 
         let mut nbt_index = 0;
 
-        let nbt_tag = match NbtTag::traverse_nbt_tree(cursor, &mut nbt_index) {
+        /* let nbt_tag = match NbtTag::traverse_nbt_tree(cursor, &mut nbt_index) {
             Ok(nbt_tag) => nbt_tag,
             Err(e) => return Err(e),
-        };
-
-        Ok(nbt_tag)
+        };      
+ */
+    NbtTag::traverse_nbt_tree(cursor, &mut nbt_index);
+        
+        //Ok(nbt_tag)
     }
 
-    fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) -> Result<NbtTag, NbtReadError> {
+    fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) { //-> Result<NbtTag, NbtReadError> {
         
-        let byte_start = cursor.position();
+        let mut test_sequence = NbtTagSequence::new();
+
+        let finished_reading = false;
         
-        let tag_id = match NbtTag::parse_nbt_tag_id(cursor) {
-            None => return Err(NbtReadError::InvalidContent),
-            Some(tag_id) => tag_id,
-        };
+        let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
 
-        let mut tag_name = String::new();
-        let mut tag_value = NbtTagType::End(None);
-
-        if let NbtTagId::End = tag_id {
-            // nothing to do here :-)
-        }
-        else {
-            tag_name = match NbtTag::parse_nbt_tag_string(cursor) {
-                Ok(tag_name) => tag_name,
-                Err(e) => return Err(e),
-            };
+        while finished_reading == false {
             
-            tag_value = match NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index) {
-                Ok(tag_value) => tag_value,
-                Err(e) => return Err(e),
-            };
+            let byte_start = cursor.position();
+
+            /* let tag_id = match NbtTag::parse_nbt_tag_id(cursor) {
+                None => return Err(NbtReadError::InvalidContent),
+                Some(tag_id) => tag_id,
+            }; */
+            let tag_id = NbtTag::parse_nbt_tag_id(cursor).unwrap();
+
+            let mut tag_name = String::new();
+            let mut tag_value = NbtTagType::End(None);
+
+            if let NbtTagId::End = tag_id {
+                // nothing to do here :-)
+            }
+            else {
+                tag_name = NbtTag::parse_nbt_tag_string(cursor).unwrap();
+                tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
+            }
+
+            let byte_end = cursor.position();
+
+            let current_index = *nbt_index;
+            *nbt_index = current_index + 1;
+
+            test_sequence.tags.push(NbtTag { name: tag_name, 
+                                            value: tag_value, 
+                                            byte_start: byte_start, 
+                                            byte_end: byte_end,
+                                            index: current_index });
+        
         }
 
-        let byte_end = cursor.position();
-
-        let current_index = *nbt_index;
-        *nbt_index = current_index + 1;
-
-        Ok(NbtTag { name: tag_name, 
+        /* Ok(NbtTag { name: tag_name, 
                     value: tag_value, 
                     byte_start: byte_start, 
                     byte_end: byte_end,
-                    index: current_index })
+                    index: current_index }) */
+            
     }
 
 
@@ -310,7 +323,7 @@ impl NbtTag {
         Ok(name)
     }
 
-    fn parse_nbt_tag_list(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) -> Result<Vec<NbtTag>, NbtReadError> {
+    /* fn parse_nbt_tag_list(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) -> Result<Vec<NbtTag>, NbtReadError> {
 
         let list_tag_id = match NbtTag::parse_nbt_tag_id(cursor) {
             None => return Err(NbtReadError::InvalidContent),
@@ -347,10 +360,10 @@ impl NbtTag {
 
         Ok(list)
 
-    }
+    } */
 
 
-    fn parse_nbt_tag_compound(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) -> Result<Vec<NbtTag>, NbtReadError> {
+/*     fn parse_nbt_tag_compound(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) -> Result<Vec<NbtTag>, NbtReadError> {
         
         let mut compound_values = Vec::<NbtTag>::new();
         let mut compound_completely_read = false;
@@ -373,7 +386,7 @@ impl NbtTag {
         }   
         
         Ok(compound_values)
-    }
+    } */
 
     fn parse_nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &NbtTagId, nbt_index: &mut usize) -> Result<NbtTagType, NbtReadError> {
         let tag_value = match tag_id {
@@ -456,7 +469,8 @@ impl NbtTag {
             },
 
             NbtTagId::List => {
-                let raw_tag_value = match NbtTag::parse_nbt_tag_list(cursor, nbt_index) {
+                let raw_tag_value = match NbtTag::parse_nbt_tag_string(cursor) {
+                    //here we only store the nbt name, we parse the list in the next iterations
                     Ok(x) => x,
                     Err(e) => return Err(e),
                 };
@@ -464,7 +478,8 @@ impl NbtTag {
             },
             
             NbtTagId::Compound => {
-                let compound_values = match NbtTag::parse_nbt_tag_compound(cursor, nbt_index) {
+                let compound_values = match NbtTag::parse_nbt_tag_string(cursor) {
+                    //here we only store the nbt name, we parse the compound in the next iterations
                     Ok(values) => values,
                     Err(e) => return Err(e),
                 };
