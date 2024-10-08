@@ -1,0 +1,9 @@
+[package]
+name = "nbt-sniper"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+byteorder = "1.3"
+flate2 = "1.0.34"
+thiserror = "1.0.64"
