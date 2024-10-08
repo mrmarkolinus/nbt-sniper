@@ -8,14 +8,33 @@ use std::io::Cursor;
 pub mod nbt;
 
 fn main() {
-    
-    //let test_nbtint = NbtTag::new(NbtTagId::Int);
-    //println!("{:?}", test_nbtint.value);
     let buffer = read_file("files/bigtest.nbt").unwrap();
     let mut cursor = Cursor::new(buffer);
-    let test_tag = nbt::NbtTag::parse_from_buf(&mut cursor);
+
+    let test_tag_sequence = nbt::NbtTagSequence::new();
+    let mut test_tag = nbt::NbtTag::parse_from_buf(&mut cursor).unwrap();
+
     println!("{:?}", test_tag);
-    
+    println!("####################");
+    println!("{:?}", test_tag.next());
+    println!("{:?}", test_tag.next());
+
+    println!("{:?}", test_tag.next());
+
+    println!("{:?}", test_tag.next());
+
+    println!("{:?}", test_tag.next());
+
+
+    //test_tag.iter().for_each(|x| println!("{:?}", x.byte_start()));
+
+
+/*     let mut tag_index = 0;
+    for elem in test_tag {
+        println!("{:?}", elem);
+        println!("Tag index: {}", tag_index);
+        tag_index += 1;
+    } */
 }
 
 fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
