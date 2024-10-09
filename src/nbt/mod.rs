@@ -104,8 +104,9 @@ impl NbtTagId {
 
 enum ParseNbtFsm {
     Normal,
-    End,
-    List
+    NoAction,
+    List,
+    EndOfFile
 }
 
 struct NbtListParser {
@@ -117,6 +118,32 @@ struct NbtListParser {
 impl NbtListParser {
     pub fn new() -> NbtListParser {
         NbtListParser { list_tag_id: NbtTagId::End, list_len: 0, list_elem_count: 0 }
+    }
+
+    pub fn set_id(&mut self, tag_id: NbtTagId) {
+        self.list_tag_id = tag_id;
+    }
+
+    pub fn tag_id(&self) -> &NbtTagId {
+        &self.list_tag_id
+    }
+
+    pub fn set_len(&mut self, len: i32) {
+        self.list_len = len;
+    }
+
+    pub fn increment(&mut self) {
+        self.list_elem_count = self.list_elem_count + 1;
+    }
+
+    pub fn reset(&mut self) {
+        self.list_tag_id = NbtTagId::End;
+        self.list_len = 0;
+        self.list_elem_count = 0;
+    }
+
+    pub fn is_end(&self) -> bool {
+        self.list_elem_count >= self.list_len - 1
     }
 }
 
@@ -202,12 +229,12 @@ impl NbtTag {
         
         let mut finished_reading = false;
 
-        let mut list_tag_id = NbtTagId::End;
-        let mut list_len = 0;
-        let mut list_elem_count = 0;
-        let mut reading_list = false;
+        //let mut list_tag_id = NbtTagId::End;
+        //let mut list_len = 0;
+        //let mut list_elem_count = 0;
+        //let mut reading_list = false;
 
-        
+        //nbt_parser.list_parser.reset();
 
         let mut tag_id;
 
@@ -224,17 +251,16 @@ impl NbtTag {
             if let ParseNbtFsm::List = nbt_parser.state() {
                 //a list is a sequence of NBT Tags without names and tags id.
                 
-                if list_elem_count < list_len - 1 {
-                    list_elem_count = list_elem_count + 1;
-                }
-                else {
-                    list_elem_count = 0;
-                    list_len = 0;
-                    //reading_list = false;
+                if nbt_parser.list_parser.is_end() {
+                    tag_id = *nbt_parser.list_parser.tag_id();
+                    nbt_parser.list_parser.reset();
                     nbt_parser.change_state_to(ParseNbtFsm::Normal); 
                 }
+                else {
+                    nbt_parser.list_parser.increment(); 
+                    tag_id = *nbt_parser.list_parser.tag_id();            
+                }
 
-                tag_id = list_tag_id;
                 tag_name = "".to_string();
             }
             else {
@@ -254,16 +280,15 @@ impl NbtTag {
                 tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
 
                 if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
-                    list_tag_id = list_elem_tag_ids.0;  
-                    list_len = list_elem_tag_ids.1; 
-                    //reading_list = true;
+                    nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
+                    nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
                     nbt_parser.change_state_to(ParseNbtFsm::List); 
                 }
             }
-            /* println!("-------------------------------");
+            println!("-------------------------------");
             println!("Tag ID: {:?}", tag_id);
             println!("Tag Name: {:?}", tag_name);
-            println!("Tag Value: {:?}", tag_value); */
+            println!("Tag Value: {:?}", tag_value); 
 
 
             let byte_end = cursor.position();
