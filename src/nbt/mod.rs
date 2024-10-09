@@ -220,9 +220,97 @@ impl NbtTag {
         };      
  */     let mut nbt_parser = NbtParser::new(ParseNbtFsm::Normal);
         let mut test_sequence = NbtTagSequence::new();
-        NbtTag::traverse_nbt_tree(cursor, &mut test_sequence, &mut nbt_parser, &mut nbt_index);
+        NbtTag::fsm_parse(cursor, &mut test_sequence, &mut nbt_parser, &mut nbt_index);
         
         Ok(test_sequence)
+    }
+
+
+    fn fsm_parse_nbt_value (cursor: &mut Cursor<Vec<u8>>, nbt_parser: &mut NbtParser, tag_id: &NbtTagId, nbt_index: &mut usize) -> NbtTagType {
+        
+        let tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
+
+        if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
+            nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
+            nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
+            nbt_parser.change_state_to(ParseNbtFsm::List); 
+        }
+
+        tag_value        
+    }
+
+    fn fsm_parse(cursor: &mut Cursor<Vec<u8>>, test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser, nbt_index: &mut usize) {//-> (NbtTagId, String, NbtTagType) {
+        
+        let mut tag_id;
+        let byte_start = cursor.position();      
+
+        let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
+        cursor.seek(SeekFrom::Start(0)).unwrap();
+
+        loop {
+
+            let mut tag_name = String::new();
+            let mut tag_value = NbtTagType::End(None);
+
+            match nbt_parser.state() {
+                ParseNbtFsm::Normal => {
+                    if let ParseNbtFsm::List = nbt_parser.state() {
+                        nbt_parser.change_state_to(ParseNbtFsm::List);
+                        
+                    }
+                    else {
+                        tag_id = NbtTag::parse_nbt_tag_id(cursor).unwrap();
+                        if let NbtTagId::End = tag_id {
+                            nbt_parser.change_state_to(ParseNbtFsm::NoAction);
+                        }
+                        else {
+                            tag_name = NbtTag::parse_nbt_tag_string(cursor).unwrap();
+                            tag_value = NbtTag::fsm_parse_nbt_value(cursor, nbt_parser, &tag_id, nbt_index);
+                        }
+                    }
+                },
+
+                ParseNbtFsm::List => {
+                    if nbt_parser.list_parser.is_end() {
+                        tag_id = *nbt_parser.list_parser.tag_id();
+                        nbt_parser.list_parser.reset();
+                        nbt_parser.change_state_to(ParseNbtFsm::Normal); 
+                    }
+                    else {
+                        nbt_parser.list_parser.increment(); 
+                        tag_id = *nbt_parser.list_parser.tag_id();            
+                    }
+
+                    tag_name = "".to_string();
+                    tag_value = NbtTag::fsm_parse_nbt_value(cursor, nbt_parser, &tag_id, nbt_index);  
+                },
+
+                ParseNbtFsm::NoAction => {
+                    //nothing to do for NbtTag End
+                    nbt_parser.change_state_to(ParseNbtFsm::Normal); 
+                },
+
+                ParseNbtFsm::EndOfFile => {
+                    break;
+                },
+            }
+
+            let byte_end = cursor.position();
+
+            let current_index = *nbt_index;
+            *nbt_index = current_index + 1;
+
+            test_sequence.tags.push(NbtTag { name: tag_name, 
+                                            value: tag_value, 
+                                            byte_start: byte_start, 
+                                            byte_end: byte_end,
+                                            index: current_index });
+
+            if byte_end >= total_bytes {
+                nbt_parser.change_state_to(ParseNbtFsm::EndOfFile);
+                break; //TODO Remove
+            }
+        }
     }
 
     fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser, nbt_index: &mut usize) { //-> Result<NbtReadError> {
@@ -241,6 +329,8 @@ impl NbtTag {
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
         cursor.seek(SeekFrom::Start(0)).unwrap();
 
+        
+        
         while finished_reading == false {
 
             let byte_start = cursor.position();
