@@ -43,6 +43,7 @@ pub struct NbtTag {
     byte_start: u64,
     byte_end: u64,
     index: usize,
+    depth: i64
 }
 
 #[derive(Debug)]
@@ -109,6 +110,7 @@ enum ParseNbtFsm {
     EndOfFile
 }
 
+
 struct NbtListParser {
     list_tag_id: NbtTagId,
     list_len: i32,
@@ -152,6 +154,7 @@ struct NbtParser {
     list_parser: NbtListParser,
     cursor: Cursor<Vec<u8>>,
     index: usize,
+    tree_depth: i64,
 }
 
 impl NbtParser {
@@ -159,7 +162,8 @@ impl NbtParser {
         NbtParser { state: state, 
                     list_parser: NbtListParser::new(),
                     cursor: cursor,
-                    index: 0
+                    index: 0,
+                    tree_depth: 0
                  }
     }
 
@@ -249,6 +253,7 @@ impl NbtTag {
             nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
             nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
             nbt_parser.change_state_to(ParseNbtFsm::List); 
+            nbt_parser.tree_depth+=1;
         }
 
         tag_value        
@@ -272,17 +277,22 @@ impl NbtTag {
             match nbt_parser.state() {
                 ParseNbtFsm::Normal => {
                     if let ParseNbtFsm::List = nbt_parser.state() {
+                        nbt_parser.tree_depth+=1; 
                         nbt_parser.change_state_to(ParseNbtFsm::List);
-                        
                     }
                     else {
                         tag_id = NbtTag::parse_nbt_tag_id(&mut cursor).unwrap();
+
                         if let NbtTagId::End = tag_id {
                             nbt_parser.change_state_to(ParseNbtFsm::NoAction);
                         }
                         else {
                             tag_name = NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();
                             tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);
+
+                            if let NbtTagId::Compound = tag_id {
+                                nbt_parser.tree_depth+=1;
+                            }
                         }
                     }
                 },
@@ -292,6 +302,7 @@ impl NbtTag {
                         tag_id = *nbt_parser.list_parser.tag_id();
                         nbt_parser.list_parser.reset();
                         nbt_parser.change_state_to(ParseNbtFsm::Normal); 
+                        nbt_parser.tree_depth-=1;
                     }
                     else {
                         nbt_parser.list_parser.increment(); 
@@ -303,7 +314,7 @@ impl NbtTag {
                 },
 
                 ParseNbtFsm::NoAction => {
-                    //nothing to do for NbtTag End
+                    nbt_parser.tree_depth-=1;
                     nbt_parser.change_state_to(ParseNbtFsm::Normal); 
                 },
 
@@ -318,7 +329,8 @@ impl NbtTag {
                                             value: tag_value, 
                                             byte_start: byte_start, 
                                             byte_end: byte_end,
-                                            index: *nbt_parser.index() });
+                                            index: *nbt_parser.index(),
+                                            depth: nbt_parser.tree_depth});
 
             nbt_parser.increment_index();
 
@@ -329,7 +341,7 @@ impl NbtTag {
         }
     }
 
-    fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser, nbt_index: &mut usize) { //-> Result<NbtReadError> {
+   /*  fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser, nbt_index: &mut usize) { //-> Result<NbtReadError> {
         
         let mut finished_reading = false;
 
@@ -415,7 +427,7 @@ impl NbtTag {
             
     }
 
-    
+     */
 
 /*     fn nbt_root_present(cursor: &mut Cursor<Vec<u8>>) -> (bool, Option<NbtTagId>, String) {
         
