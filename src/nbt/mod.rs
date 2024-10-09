@@ -149,13 +149,18 @@ impl NbtListParser {
 
 struct NbtParser {
     state: ParseNbtFsm,
-    list_parser: NbtListParser
+    list_parser: NbtListParser,
+    cursor: Cursor<Vec<u8>>,
+    index: usize,
 }
 
 impl NbtParser {
-    pub fn new(state: ParseNbtFsm) -> NbtParser {
+    pub fn new(state: ParseNbtFsm, cursor: Cursor<Vec<u8>>) -> NbtParser {
         NbtParser { state: state, 
-                    list_parser: NbtListParser::new() }
+                    list_parser: NbtListParser::new(),
+                    cursor: cursor,
+                    index: 0
+                 }
     }
 
     pub fn change_state_to(&mut self, state: ParseNbtFsm) {
@@ -164,6 +169,18 @@ impl NbtParser {
 
     pub fn state(&self) -> &ParseNbtFsm {
         &self.state
+    }
+
+    pub fn cursor(&mut self) -> Cursor<Vec<u8>> {
+        self.cursor.clone() //TODO: use &mut self.cursor
+    }
+
+    pub fn index(&self) -> &usize {
+        &self.index
+    }
+
+    pub fn increment_index(&mut self) {
+        self.index = self.index + 1;
     }
 }
 
@@ -212,23 +229,21 @@ impl NbtTag {
             NbtTag { name: tag_name, value: NbtTagType::Compound(compound_values) }
         } */
 
-        let mut nbt_index = 0;
-
         /* let nbt_tag = match NbtTag::traverse_nbt_tree(cursor, &mut nbt_index) {
             Ok(nbt_tag) => nbt_tag,
             Err(e) => return Err(e),
         };      
- */     let mut nbt_parser = NbtParser::new(ParseNbtFsm::Normal);
+ */     let mut nbt_parser = NbtParser::new(ParseNbtFsm::Normal, cursor.clone());
         let mut test_sequence = NbtTagSequence::new();
-        NbtTag::fsm_parse(cursor, &mut test_sequence, &mut nbt_parser, &mut nbt_index);
+        NbtTag::fsm_parse(&mut test_sequence, &mut nbt_parser);
         
         Ok(test_sequence)
     }
 
 
-    fn fsm_parse_nbt_value (cursor: &mut Cursor<Vec<u8>>, nbt_parser: &mut NbtParser, tag_id: &NbtTagId, nbt_index: &mut usize) -> NbtTagType {
-        
-        let tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
+    fn fsm_parse_nbt_value (cursor: &mut Cursor<Vec<u8>>, nbt_parser: &mut NbtParser, tag_id: &NbtTagId) -> NbtTagType {
+
+        let tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id).unwrap();
 
         if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
             nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
@@ -239,8 +254,10 @@ impl NbtTag {
         tag_value        
     }
 
-    fn fsm_parse(cursor: &mut Cursor<Vec<u8>>, test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser, nbt_index: &mut usize) {//-> (NbtTagId, String, NbtTagType) {
+    fn fsm_parse(test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser) {//-> (NbtTagId, String, NbtTagType) {
         
+        let mut cursor = nbt_parser.cursor();
+
         let mut tag_id;
         let byte_start = cursor.position();      
 
@@ -259,13 +276,13 @@ impl NbtTag {
                         
                     }
                     else {
-                        tag_id = NbtTag::parse_nbt_tag_id(cursor).unwrap();
+                        tag_id = NbtTag::parse_nbt_tag_id(&mut cursor).unwrap();
                         if let NbtTagId::End = tag_id {
                             nbt_parser.change_state_to(ParseNbtFsm::NoAction);
                         }
                         else {
-                            tag_name = NbtTag::parse_nbt_tag_string(cursor).unwrap();
-                            tag_value = NbtTag::fsm_parse_nbt_value(cursor, nbt_parser, &tag_id, nbt_index);
+                            tag_name = NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();
+                            tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);
                         }
                     }
                 },
@@ -282,7 +299,7 @@ impl NbtTag {
                     }
 
                     tag_name = "".to_string();
-                    tag_value = NbtTag::fsm_parse_nbt_value(cursor, nbt_parser, &tag_id, nbt_index);  
+                    tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);  
                 },
 
                 ParseNbtFsm::NoAction => {
@@ -297,14 +314,13 @@ impl NbtTag {
 
             let byte_end = cursor.position();
 
-            let current_index = *nbt_index;
-            *nbt_index = current_index + 1;
-
             test_sequence.tags.push(NbtTag { name: tag_name, 
                                             value: tag_value, 
                                             byte_start: byte_start, 
                                             byte_end: byte_end,
-                                            index: current_index });
+                                            index: *nbt_parser.index() });
+
+            nbt_parser.increment_index();
 
             if byte_end >= total_bytes {
                 nbt_parser.change_state_to(ParseNbtFsm::EndOfFile);
@@ -367,7 +383,7 @@ impl NbtTag {
                 // nothing to do
             }
             else {
-                tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
+                tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id).unwrap();
 
                 if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
                     nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
@@ -508,7 +524,7 @@ impl NbtTag {
         Ok(compound_values)
     } */
 
-    fn parse_nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &NbtTagId, nbt_index: &mut usize) -> Result<NbtTagType, NbtReadError> {
+    fn parse_nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &NbtTagId) -> Result<NbtTagType, NbtReadError> {
         let tag_value = match tag_id {
             NbtTagId::End => NbtTagType::End(None),
             
