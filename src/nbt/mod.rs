@@ -102,88 +102,55 @@ impl NbtTagId {
     }
 }
 
-/*  impl Iterator for NbtTag {
-    type Item = NbtTag;
+enum ParseNbtFsm {
+    Normal,
+    End,
+    List
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.value {
-            NbtTagType::End(_) => None,
-            NbtTagType::Compound(_) => {
-                let current = NbtTag { name: self.name.clone(), value: NbtTagType::End(None), byte_start: self.byte_start, byte_end: self.byte_end};
-            
-                if let NbtTagType::Compound(ref mut compound) = self.value {
-                    compound.pop() 
-                }
-                else {
-                    None
-                }
-            },
-            
-            _ => {
-                let current = NbtTag { name: self.name.clone(), value: NbtTagType::End(None), byte_start: self.byte_start, byte_end: self.byte_end};
-                Some(current)
-            },
-        }
+struct NbtListParser {
+    list_tag_id: NbtTagId,
+    list_len: i32,
+    list_elem_count: i32,
+}
+
+impl NbtListParser {
+    pub fn new() -> NbtListParser {
+        NbtListParser { list_tag_id: NbtTagId::End, list_len: 0, list_elem_count: 0 }
     }
-}   */
+}
+
+struct NbtParser {
+    state: ParseNbtFsm,
+    list_parser: NbtListParser
+}
+
+impl NbtParser {
+    pub fn new(state: ParseNbtFsm) -> NbtParser {
+        NbtParser { state: state, 
+                    list_parser: NbtListParser::new() }
+    }
+
+    pub fn change_state_to(&mut self, state: ParseNbtFsm) {
+        self.state = state;
+    }
+
+    pub fn state(&self) -> &ParseNbtFsm {
+        &self.state
+    }
+}
 
 impl NbtTagSequence {
     pub fn new() -> NbtTagSequence {
         NbtTagSequence { tags: Vec::<NbtTag>::new() } 
     }
+
+    pub fn nbt_tags(&self) -> &Vec<NbtTag> {
+        &self.tags
+    }
 }
 
-/* pub struct NbtTagIterator<'a> {
-    nbt_tag: &'a NbtTag,
-    index: usize,
-} */
-
-/* impl<'a> Iterator for NbtTagIterator<'a> {
-    type Item = &'a NbtTag;
-    
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.nbt_tag.value {
-            NbtTagType::End(_) => None,
-            NbtTagType::Compound(_) => {
-            
-                if let NbtTagType::Compound(ref compound) = self.nbt_tag.value {
-                    let test = compound.first();
-                    test 
-                }
-                else {
-                    None
-                }
-            },
-            
-            _ => {
-                Some(self.nbt_tag)
-            },
-        }
-    }
-} */
-
 impl NbtTag {
-
-    /* pub fn next (&mut self) -> Option<&NbtTag> {
-        match self.value {
-            NbtTagType::End(_) => None,
-            NbtTagType::Compound(_) => {
-            
-                if let NbtTagType::Compound(ref mut compound) = self.value {
-                    let test = compound.first();
-                    test 
-                }
-                else {
-                    None
-                }
-            },
-            
-            _ => {
-                Some(self)
-            },
-        }
-    } */
-
 
     pub fn value(&self) -> &NbtTagType {
         &self.value
@@ -201,7 +168,7 @@ impl NbtTag {
         self.byte_end
     }
 
-    pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) { //-> Result<NbtTag, NbtReadError> {
+    pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTagSequence, NbtReadError> {
     
 /*         let (nbt_root_present, 
             tag_id, 
@@ -224,39 +191,37 @@ impl NbtTag {
             Ok(nbt_tag) => nbt_tag,
             Err(e) => return Err(e),
         };      
- */
-    NbtTag::traverse_nbt_tree(cursor, &mut nbt_index);
+ */     let mut nbt_parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut test_sequence = NbtTagSequence::new();
+        NbtTag::traverse_nbt_tree(cursor, &mut test_sequence, &mut nbt_parser, &mut nbt_index);
         
-        //Ok(nbt_tag)
+        Ok(test_sequence)
     }
 
-    fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, nbt_index: &mut usize) { //-> Result<NbtTag, NbtReadError> {
+    fn traverse_nbt_tree(cursor: &mut Cursor<Vec<u8>>, test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser, nbt_index: &mut usize) { //-> Result<NbtReadError> {
         
-        let mut test_sequence = NbtTagSequence::new();
-        let mut previous_tag_id = NbtTagId::End;
         let mut finished_reading = false;
-        
-        let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
-        cursor.seek(SeekFrom::Start(0)).unwrap();
 
         let mut list_tag_id = NbtTagId::End;
         let mut list_len = 0;
         let mut list_elem_count = 0;
         let mut reading_list = false;
 
+        
+
+        let mut tag_id;
+
+        let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
+        cursor.seek(SeekFrom::Start(0)).unwrap();
+
         while finished_reading == false {
 
             let byte_start = cursor.position();
-
-            /* let tag_id = match NbtTag::parse_nbt_tag_id(cursor) {
-                None => return Err(NbtReadError::InvalidContent),
-                Some(tag_id) => tag_id,
-            }; */
-            let mut tag_id = NbtTagId::End;
+            
             let mut tag_name = String::new();
             let mut tag_value = NbtTagType::End(None);
 
-            if reading_list {
+            if let ParseNbtFsm::List = nbt_parser.state() {
                 //a list is a sequence of NBT Tags without names and tags id.
                 
                 if list_elem_count < list_len - 1 {
@@ -265,7 +230,8 @@ impl NbtTag {
                 else {
                     list_elem_count = 0;
                     list_len = 0;
-                    reading_list = false;
+                    //reading_list = false;
+                    nbt_parser.change_state_to(ParseNbtFsm::Normal); 
                 }
 
                 tag_id = list_tag_id;
@@ -290,13 +256,14 @@ impl NbtTag {
                 if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
                     list_tag_id = list_elem_tag_ids.0;  
                     list_len = list_elem_tag_ids.1; 
-                    reading_list = true; 
+                    //reading_list = true;
+                    nbt_parser.change_state_to(ParseNbtFsm::List); 
                 }
             }
-            println!("-------------------------------");
+            /* println!("-------------------------------");
             println!("Tag ID: {:?}", tag_id);
             println!("Tag Name: {:?}", tag_name);
-            println!("Tag Value: {:?}", tag_value);
+            println!("Tag Value: {:?}", tag_value); */
 
 
             let byte_end = cursor.position();
@@ -313,15 +280,7 @@ impl NbtTag {
             if byte_end >= total_bytes {
                 finished_reading = true;
             }
-            
-            //previous_tag_id = tag_id;
         }
-
-        /* Ok(NbtTag { name: tag_name, 
-                    value: tag_value, 
-                    byte_start: byte_start, 
-                    byte_end: byte_end,
-                    index: current_index }) */
             
     }
 
