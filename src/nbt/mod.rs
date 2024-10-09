@@ -14,7 +14,7 @@ pub enum NbtReadError {
     InvalidContent,  // Custom error for content validation
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum NbtTagId {
     End = 0,
     Byte = 1,
@@ -56,7 +56,7 @@ pub enum NbtTagType {
     Double(f64),
     ByteArray(Vec<i8>),
     String(String),
-    List(String), //only store the name of the list
+    List((NbtTagId, i32)), //only store the name and the lenght of the list + the type of the elements in the list
     Compound(String), //only store the name of the compound
     IntArray(Vec<i32>),
     LongArray(Vec<i64>),
@@ -239,6 +239,11 @@ impl NbtTag {
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
         cursor.seek(SeekFrom::Start(0)).unwrap();
 
+        let mut list_tag_id = NbtTagId::End;
+        let mut list_len = 0;
+        let mut list_elem_count = 0;
+        let mut reading_list = false;
+
         while finished_reading == false {
 
             let byte_start = cursor.position();
@@ -247,29 +252,52 @@ impl NbtTag {
                 None => return Err(NbtReadError::InvalidContent),
                 Some(tag_id) => tag_id,
             }; */
-            let mut tag_id = NbtTag::parse_nbt_tag_id(cursor).unwrap();
-
+            let mut tag_id = NbtTagId::End;
             let mut tag_name = String::new();
             let mut tag_value = NbtTagType::End(None);
 
-            if let NbtTagId::End = tag_id {
-                // nothing to do here :-)
+            if reading_list {
+                //a list is a sequence of NBT Tags without names and tags id.
+                
+                if list_elem_count < list_len - 1 {
+                    list_elem_count = list_elem_count + 1;
+                }
+                else {
+                    list_elem_count = 0;
+                    list_len = 0;
+                    reading_list = false;
+                }
+
+                tag_id = list_tag_id;
+                tag_name = "".to_string();
             }
             else {
-                if let NbtTagId::List = previous_tag_id {
-                    //a list is a sequence of NBT Tags without names
-                    tag_name = "".to_string();
+                tag_id = NbtTag::parse_nbt_tag_id(cursor).unwrap();
+                if let NbtTagId::End = tag_id {
+                    // nothing to do
                 }
                 else {
                     tag_name = NbtTag::parse_nbt_tag_string(cursor).unwrap();
                 }
-
-                tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
-                println!("-------------------------------");
-                println!("Tag ID: {:?}", tag_id);
-                println!("Tag Name: {:?}", tag_name);
-                println!("Tag Value: {:?}", tag_value);
             }
+
+            if let NbtTagId::End = tag_id {
+                // nothing to do
+            }
+            else {
+                tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id, nbt_index).unwrap();
+
+                if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
+                    list_tag_id = list_elem_tag_ids.0;  
+                    list_len = list_elem_tag_ids.1; 
+                    reading_list = true; 
+                }
+            }
+            println!("-------------------------------");
+            println!("Tag ID: {:?}", tag_id);
+            println!("Tag Name: {:?}", tag_name);
+            println!("Tag Value: {:?}", tag_value);
+
 
             let byte_end = cursor.position();
 
@@ -286,7 +314,7 @@ impl NbtTag {
                 finished_reading = true;
             }
             
-            previous_tag_id = tag_id;
+            //previous_tag_id = tag_id;
         }
 
         /* Ok(NbtTag { name: tag_name, 
@@ -297,6 +325,7 @@ impl NbtTag {
             
     }
 
+    
 
 /*     fn nbt_root_present(cursor: &mut Cursor<Vec<u8>>) -> (bool, Option<NbtTagId>, String) {
         
@@ -487,17 +516,20 @@ impl NbtTag {
 
             NbtTagId::List => {
                 /* let raw_tag_value = match NbtTag::parse_nbt_tag_string(cursor) {
-                    //here we only store the nbt name, we parse the list in the next iterations
+                    //here we only store the nbt name and the type of the elements in the list, we parse the list in the next iterations
                     Ok(x) => x,
                     Err(e) => return Err(e),
                 }; */
-                let list_elem_tag_ids = NbtTag::parse_nbt_tag_id(cursor);
+                let list_elem_tag_ids =  match NbtTag::parse_nbt_tag_id(cursor) {
+                    None => return Err(NbtReadError::InvalidContent),
+                    Some(list_elem_tag_ids) => list_elem_tag_ids,
+                };
                 let len = cursor.read_i32::<BigEndian>().unwrap();
                 if len > 65_536 {
                     //TODO error handling
                     panic!("List length is too large");
                 }
-                NbtTagType::List("".to_string())
+                NbtTagType::List((list_elem_tag_ids, len))
             },
             
             NbtTagId::Compound => {
