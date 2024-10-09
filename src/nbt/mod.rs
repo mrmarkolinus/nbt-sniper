@@ -276,25 +276,20 @@ impl NbtTag {
 
             match nbt_parser.state() {
                 ParseNbtFsm::Normal => {
-                    if let ParseNbtFsm::List = nbt_parser.state() {
-                        nbt_parser.tree_depth+=1; 
-                        nbt_parser.change_state_to(ParseNbtFsm::List);
+                    tag_id = NbtTag::parse_nbt_tag_id(&mut cursor).unwrap();
+
+                    if let NbtTagId::End = tag_id {
+                        nbt_parser.change_state_to(ParseNbtFsm::NoAction);
                     }
                     else {
-                        tag_id = NbtTag::parse_nbt_tag_id(&mut cursor).unwrap();
+                        tag_name = NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();
+                        tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);
 
-                        if let NbtTagId::End = tag_id {
-                            nbt_parser.change_state_to(ParseNbtFsm::NoAction);
-                        }
-                        else {
-                            tag_name = NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();
-                            tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);
-
-                            if let NbtTagId::Compound = tag_id {
-                                nbt_parser.tree_depth+=1;
-                            }
+                        if let NbtTagId::Compound = tag_id {
+                            nbt_parser.tree_depth+=1;
                         }
                     }
+                    
                 },
 
                 ParseNbtFsm::List => {
@@ -311,6 +306,10 @@ impl NbtTag {
 
                     tag_name = "".to_string();
                     tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);  
+
+                    if let NbtTagId::Compound = tag_id {
+                        nbt_parser.tree_depth+=1;
+                    }
                 },
 
                 ParseNbtFsm::NoAction => {
