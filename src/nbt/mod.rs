@@ -245,48 +245,44 @@ impl NbtTag {
     }
 
 
-    fn fsm_parse_nbt_value (cursor: &mut Cursor<Vec<u8>>, nbt_parser: &mut NbtParser, tag_id: &NbtTagId) -> NbtTagType {
-
-        let tag_value = NbtTag::parse_nbt_tag(cursor, &tag_id).unwrap();
-
-        if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
-            nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
-            nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
-            nbt_parser.change_state_to(ParseNbtFsm::List); 
-            nbt_parser.tree_depth+=1;
-        }
-
-        tag_value        
-    }
 
     fn fsm_parse(test_sequence : &mut NbtTagSequence, nbt_parser: &mut NbtParser) {//-> (NbtTagId, String, NbtTagType) {
         
         let mut cursor = nbt_parser.cursor();
-
         let mut tag_id;
-        let byte_start = cursor.position();      
-
+        let mut depth_delta= 0;
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
+        
         cursor.seek(SeekFrom::Start(0)).unwrap();
-
         loop {
 
+            let byte_start = cursor.position();   
             let mut tag_name = String::new();
             let mut tag_value = NbtTagType::End(None);
+            
+            nbt_parser.tree_depth+=depth_delta;
+            depth_delta = 0;
 
             match nbt_parser.state() {
                 ParseNbtFsm::Normal => {
                     tag_id = NbtTag::parse_nbt_tag_id(&mut cursor).unwrap();
 
                     if let NbtTagId::End = tag_id {
-                        nbt_parser.change_state_to(ParseNbtFsm::NoAction);
+                        depth_delta -= 1;
                     }
                     else {
-                        tag_name = NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();
-                        tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);
+                        tag_name = NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();    
+                        tag_value = NbtTag::parse_nbt_tag(&mut cursor, &tag_id).unwrap();
+
+                        if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
+                            nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
+                            nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
+                            nbt_parser.change_state_to(ParseNbtFsm::List); 
+                            depth_delta += 1;
+                        }
 
                         if let NbtTagId::Compound = tag_id {
-                            nbt_parser.tree_depth+=1;
+                            depth_delta += 1;
                         }
                     }
                     
@@ -297,7 +293,7 @@ impl NbtTag {
                         tag_id = *nbt_parser.list_parser.tag_id();
                         nbt_parser.list_parser.reset();
                         nbt_parser.change_state_to(ParseNbtFsm::Normal); 
-                        nbt_parser.tree_depth-=1;
+                        depth_delta -= 1;
                     }
                     else {
                         nbt_parser.list_parser.increment(); 
@@ -305,16 +301,15 @@ impl NbtTag {
                     }
 
                     tag_name = "".to_string();
-                    tag_value = NbtTag::fsm_parse_nbt_value(&mut cursor, nbt_parser, &tag_id);  
+                    tag_value = NbtTag::parse_nbt_tag(&mut cursor, &tag_id).unwrap();
 
                     if let NbtTagId::Compound = tag_id {
-                        nbt_parser.tree_depth+=1;
+                        depth_delta += 1;
                     }
                 },
 
                 ParseNbtFsm::NoAction => {
-                    nbt_parser.tree_depth-=1;
-                    nbt_parser.change_state_to(ParseNbtFsm::Normal); 
+                    //shall never be reached. delete the state?
                 },
 
                 ParseNbtFsm::EndOfFile => {
@@ -323,6 +318,8 @@ impl NbtTag {
             }
 
             let byte_end = cursor.position();
+
+
 
             test_sequence.tags.push(NbtTag { name: tag_name, 
                                             value: tag_value, 
