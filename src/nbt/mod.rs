@@ -97,7 +97,9 @@ pub struct NbtTag {
     byte_start: u64,
     byte_end: u64,
     index: usize,
-    depth: i64
+    depth: i64,
+    parent: usize,
+    children: Vec<usize>,
 }
 
 impl NbtTag {
@@ -123,6 +125,10 @@ impl NbtTag {
 
     pub fn depth(&self) -> i64 {
         self.depth
+    }
+
+    pub fn parent(&self) -> usize {
+        self.parent
     }
 }
 

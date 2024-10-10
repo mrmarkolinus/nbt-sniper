@@ -88,11 +88,16 @@ impl<'a> NbtParser <'a>{
 
 pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
     
-    let mut cursor = &mut nbt_parser.cursor();
+    let cursor = &mut nbt_parser.cursor();
     let mut tag_id;
     let mut depth_delta= 0;
     let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
     
+    let mut nbt_parent_index = 0;
+    let mut nbt_grandparent_index = 0;
+
+    //let mut depth_vector = Vec::new();
+
     cursor.seek(SeekFrom::Start(0)).unwrap();
     loop {
 
@@ -101,6 +106,22 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
         let mut tag_value = nbt::NbtTagType::End(None);
         
         nbt_parser.tree_depth+=depth_delta;
+        //depth_vector.push(nbt_parser.tree_depth);
+        
+        if depth_delta == 1 {
+            // we moved down in the nbt tree. This tag is the children of the tag in previous depth level
+            //nbt_grandparent_index = nbt_parent_index;
+            nbt_parent_index = *nbt_parser.index() - 1;        
+            
+        }
+        else if depth_delta == -1 {
+            //we moved up in the nbt tree. we need to restore the previous parent index
+            //the new parent is the parent of the previous parent
+            //for _ in 0..nbt_parser.tree_depth {
+                nbt_parent_index = test_sequence.tags[nbt_parent_index].parent(); 
+            //} 
+        }
+        
         depth_delta = 0;
 
         match nbt_parser.state() {
@@ -162,18 +183,19 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
         }
 
         let byte_end = cursor.position();
-
-
-
-        test_sequence.tags.push(nbt::NbtTag { name: tag_name, 
-                                        value: tag_value, 
-                                        byte_start: byte_start, 
-                                        byte_end: byte_end,
-                                        index: *nbt_parser.index(),
-                                        depth: nbt_parser.tree_depth});
+        
+        let new_nbt_tag = nbt::NbtTag { name: tag_name, 
+                                                value: tag_value, 
+                                                byte_start: byte_start, 
+                                                byte_end: byte_end,
+                                                index: *nbt_parser.index(),
+                                                depth: nbt_parser.tree_depth,
+                                                parent: nbt_parent_index,
+                                                children: Vec::new()};  
+        
+        test_sequence.tags.push(new_nbt_tag);
 
         nbt_parser.increment_index();
-
         if byte_end >= total_bytes {
             nbt_parser.change_state_to(ParseNbtFsm::EndOfFile);
             break; //TODO Remove
