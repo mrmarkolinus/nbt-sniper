@@ -118,6 +118,14 @@ impl NbtTagSequence {
 
 impl NbtTag {
 
+    pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTagSequence, NbtReadError> {
+        let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor.clone());
+        let mut test_sequence = NbtTagSequence::new();
+        fsm::parse(&mut test_sequence, &mut nbt_parser);
+        
+        Ok(test_sequence)
+    }
+
     pub fn value(&self) -> &NbtTagType {
         &self.value
     }
@@ -133,180 +141,5 @@ impl NbtTag {
     pub fn byte_end(&self) -> u64 {
         self.byte_end
     }
-
-    pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTagSequence, NbtReadError> {
-        let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor.clone());
-        let mut test_sequence = NbtTagSequence::new();
-        fsm::parse(&mut test_sequence, &mut nbt_parser);
-        
-        Ok(test_sequence)
-    }
-
-    fn parse_nbt_tag_id(cursor: &mut Cursor<Vec<u8>>) -> Option<NbtTagId> {
-        let id = cursor.read_u8().expect("Error reading byte from cursor");
-        
-        match NbtTagId::from_u8(id) {
-            None => None,
-            Some(id) => Some(id),
-        }
-    }
-
-    fn parse_nbt_tag_string(cursor: &mut Cursor<Vec<u8>>) -> Result<String, NbtReadError> {
-        let name_len = cursor.read_i16::<BigEndian>().unwrap();
-        let mut name = String::with_capacity(name_len as usize);
-    
-        for _ in 0..name_len {
-            let ch = match cursor.read_u8() {
-                Ok(ch) => ch,
-                Err(e) => return Err(NbtReadError::Io(e)),
-            };
-            name.push(ch as char)
-        }
-        
-        Ok(name)
-    }
-
-    fn parse_nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &NbtTagId) -> Result<NbtTagType, NbtReadError> {
-        let tag_value = match tag_id {
-            NbtTagId::End => NbtTagType::End(None),
-            
-            NbtTagId::Byte => {        
-                let raw_tag_value = match cursor.read_i8() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-                NbtTagType::Byte(raw_tag_value)
-            },
-
-            NbtTagId::Short => {
-                let raw_tag_value = match cursor.read_i16::<BigEndian>() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-                NbtTagType::Short(raw_tag_value)
-            },
-
-            NbtTagId::Int => {
-                let raw_tag_value = match cursor.read_i32::<BigEndian>() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-                NbtTagType::Int(raw_tag_value)
-            },
-
-            NbtTagId::Long => {
-                let raw_tag_value = match cursor.read_i64::<BigEndian>() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-                NbtTagType::Long(raw_tag_value)
-            },
-
-            NbtTagId::Float => {
-                let raw_tag_value = match cursor.read_f32::<BigEndian>() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-                NbtTagType::Float(raw_tag_value)
-            },
-
-            NbtTagId::Double => {
-                let raw_tag_value = match cursor.read_f64::<BigEndian>() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-                NbtTagType::Double(raw_tag_value)
-            },
-            
-            NbtTagId::ByteArray => {
-                let len = match cursor.read_i32::<BigEndian>() {
-                    Ok(x) => x,
-                    Err(e) => return Err(NbtReadError::Io(e)),
-                };
-
-                if len > 65_536 {
-                    //TODO error handling
-                }
-
-                let mut buf = Vec::with_capacity(len as usize);
-                for _ in 0..len {
-                    let x = cursor.read_i8().unwrap();
-                    buf.push(x);
-                }
-
-                NbtTagType::ByteArray(buf)
-            },
-
-            NbtTagId::String => {
-                let raw_tag_value = NbtTag::parse_nbt_tag_string(cursor);
-                
-                match raw_tag_value {
-                    Ok(value) => NbtTagType::String(value),
-                    Err(e) => return Err(e),     
-                }
-            },
-
-            NbtTagId::List => {
-                /* let raw_tag_value = match NbtTag::parse_nbt_tag_string(cursor) {
-                    //here we only store the nbt name and the type of the elements in the list, we parse the list in the next iterations
-                    Ok(x) => x,
-                    Err(e) => return Err(e),
-                }; */
-                let list_elem_tag_ids =  match NbtTag::parse_nbt_tag_id(cursor) {
-                    None => return Err(NbtReadError::InvalidContent),
-                    Some(list_elem_tag_ids) => list_elem_tag_ids,
-                };
-                let len = cursor.read_i32::<BigEndian>().unwrap();
-                if len > 65_536 {
-                    //TODO error handling
-                    panic!("List length is too large");
-                }
-                NbtTagType::List((list_elem_tag_ids, len))
-            },
-            
-            NbtTagId::Compound => {
-               /*  let compound_values = match NbtTag::parse_nbt_tag_string(cursor) {
-                    //here we only store the nbt name, we parse the compound in the next iterations
-                    Ok(values) => values,
-                    Err(e) => return Err(e),
-                }; */
-                NbtTagType::Compound("".to_string())
-            },
-            
-            NbtTagId::IntArray => {
-                let len = cursor.read_i32::<BigEndian>().unwrap();
-                if len > 65_536 {
-                    //TODO error handling
-                    panic!("Array length is too large");
-                }
-
-                let mut buf = Vec::with_capacity(len as usize);
-                for _ in 0..len {
-                    let x = cursor.read_i32::<BigEndian>().unwrap();
-                    buf.push(x);
-                }
-
-                NbtTagType::IntArray(buf)
-            },
-            NbtTagId::LongArray => {
-                let len = cursor.read_i32::<BigEndian>().unwrap();
-                if len > 65_536 {
-                    //TODO error handling
-                    panic!("Array length is too large");
-                }
-
-                let mut buf = Vec::with_capacity(len as usize);
-                for _ in 0..len {
-                    let x = cursor.read_i64::<BigEndian>().unwrap();
-                    buf.push(x);
-                }
-
-                NbtTagType::LongArray(buf)
-            }
-        };
-
-        Ok(tag_value)
-    }
-
 
 }

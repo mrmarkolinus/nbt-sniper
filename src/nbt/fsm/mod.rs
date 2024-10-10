@@ -1,6 +1,8 @@
 use crate::nbt;
 use std::io::{Cursor, Seek, SeekFrom};
 
+mod parse;
+
 pub enum ParseNbtFsm {
     Normal,
     NoAction,
@@ -104,14 +106,14 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
 
         match nbt_parser.state() {
             ParseNbtFsm::Normal => {
-                tag_id = nbt::NbtTag::parse_nbt_tag_id(&mut cursor).unwrap();
+                tag_id = parse::nbt_tag_id(&mut cursor).unwrap();
 
                 if let nbt::NbtTagId::End = tag_id {
                     depth_delta -= 1;
                 }
                 else {
-                    tag_name = nbt::NbtTag::parse_nbt_tag_string(&mut cursor).unwrap();    
-                    tag_value = nbt::NbtTag::parse_nbt_tag(&mut cursor, &tag_id).unwrap();
+                    tag_name = parse::nbt_tag_string(&mut cursor).unwrap();    
+                    tag_value = parse::nbt_tag(&mut cursor, &tag_id).unwrap();
 
                     if let nbt::NbtTagType::List(ref list_elem_tag_ids) = tag_value {
                         nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
@@ -140,7 +142,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                 }
 
                 tag_name = "".to_string();
-                tag_value = nbt::NbtTag::parse_nbt_tag(&mut cursor, &tag_id).unwrap();
+                tag_value = parse::nbt_tag(&mut cursor, &tag_id).unwrap();
 
                 if let nbt::NbtTagId::Compound = tag_id {
                     depth_delta += 1;
