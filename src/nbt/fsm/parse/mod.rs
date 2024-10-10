@@ -5,13 +5,15 @@ use std::io::Cursor;
 use crate::nbt;
 
 
-pub fn nbt_tag_id(cursor: &mut Cursor<Vec<u8>>) -> Option<nbt::NbtTagId> {
-    let id = cursor.read_u8().expect("Error reading byte from cursor");
+pub fn nbt_tag_id(cursor: &mut Cursor<Vec<u8>>) -> Result<Option<nbt::NbtTagId>, nbt::NbtReadError> {
+    let id = cursor.read_u8()?;
     
-    match nbt::NbtTagId::from_u8(id) {
+    let tag_id =match nbt::NbtTagId::from_u8(id) {
         None => None,
         Some(id) => Some(id),
-    }
+    };
+
+    Ok(tag_id)
 }
 
 pub fn nbt_tag_string(cursor: &mut Cursor<Vec<u8>>) -> Result<String, nbt::NbtReadError> {
@@ -111,9 +113,15 @@ pub fn nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &nbt::NbtTagId) -> Result<n
 
         nbt::NbtTagId::List => {
             let list_elem_tag_ids =  match nbt_tag_id(cursor) {
-                None => return Err(nbt::NbtReadError::InvalidContent),
-                Some(list_elem_tag_ids) => list_elem_tag_ids,
+                Ok(id) => {
+                    match id {
+                        None => return Err(nbt::NbtReadError::InvalidContent),
+                        Some(list_elem_tag_ids) => list_elem_tag_ids,
+                    }
+                },
+                Err(e) => return Err(e)
             };
+            
             let len = cursor.read_i32::<BigEndian>()?;
             if len > 65_536 {
                 //TODO error handling

@@ -86,7 +86,7 @@ impl NbtParser {
     }
 }
 
-pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) {//-> (NbtTagId, String, NbtTagType) {
+pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
     
     let mut cursor = nbt_parser.cursor();
     let mut tag_id;
@@ -105,7 +105,15 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
 
         match nbt_parser.state() {
             ParseNbtFsm::Normal => {
-                tag_id = parse::nbt_tag_id(&mut cursor).unwrap();
+                tag_id = match parse::nbt_tag_id(&mut cursor) {
+                    Ok(id) => {
+                        match id {
+                            Some(id) => id,
+                            None => return Err(nbt::NbtReadError::InvalidContent)
+                        }
+                    },
+                    Err(e) => return Err(e)
+                };
 
                 if let nbt::NbtTagId::End = tag_id {
                     depth_delta -= 1;
@@ -171,4 +179,6 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
             break; //TODO Remove
         }
     }
+
+    Ok(())
 }
