@@ -33,65 +33,6 @@ pub enum NbtTagId {
     LongArray = 12,
 }
 
-pub struct NbtTagSequence {
-    tags: Vec<NbtTag>,
-}
-
-
-#[derive(Debug)]
-pub struct NbtTag {
-    name: String,
-    value: NbtTagType,
-    byte_start: u64,
-    byte_end: u64,
-    index: usize,
-    depth: i64
-}
-
-impl NbtTag {
-    pub fn value(&self) -> &NbtTagType {
-        &self.value
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn byte_start(&self) -> u64 {
-        self.byte_start
-    }
-
-    pub fn byte_end(&self) -> u64 {
-        self.byte_end
-    }
-
-    pub fn index(&self) -> usize {
-        self.index
-    }
-
-    pub fn depth(&self) -> i64 {
-        self.depth
-    }
-}
-
-#[derive(Debug)]
-pub enum NbtTagType {
-    End(Option<u8>),
-    Byte(i8),
-    Short(i16),
-    Int(i32),
-    Long(i64),
-    Float(f32),
-    Double(f64),
-    ByteArray(Vec<i8>),
-    String(String),
-    List((NbtTagId, i32)), //only store the name and the lenght of the list + the type of the elements in the list
-    Compound(String), //only store the name of the compound
-    IntArray(Vec<i32>),
-    LongArray(Vec<i64>),
-}
-
-
 impl NbtTagId {
     pub fn from_u8(value: u8) -> Option<NbtTagId> {
         match value {
@@ -132,14 +73,72 @@ impl NbtTagId {
 }
 
 
+#[derive(Debug)]
+pub enum NbtTagType {
+    End(Option<u8>),
+    Byte(i8),
+    Short(i16),
+    Int(i32),
+    Long(i64),
+    Float(f32),
+    Double(f64),
+    ByteArray(Vec<i8>),
+    String(String),
+    List((NbtTagId, i32)), //only store the name and the lenght of the list + the type of the elements in the list
+    Compound(String), //only store the name of the compound
+    IntArray(Vec<i32>),
+    LongArray(Vec<i64>),
+}
+
+#[derive(Debug)]
+pub struct NbtTag {
+    name: String,
+    value: NbtTagType,
+    byte_start: u64,
+    byte_end: u64,
+    index: usize,
+    depth: i64
+}
+
+impl NbtTag {
+    pub fn value(&self) -> &NbtTagType {
+        &self.value
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn byte_start(&self) -> u64 {
+        self.byte_start
+    }
+
+    pub fn byte_end(&self) -> u64 {
+        self.byte_end
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    pub fn depth(&self) -> i64 {
+        self.depth
+    }
+}
+
+
+pub struct NbtTagSequence {
+    tags: Vec<NbtTag>,
+}
+
 impl NbtTagSequence {
 
     pub fn from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTagSequence, NbtReadError> {
-        let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor.clone());
-        let mut test_sequence = NbtTagSequence::new();
-        fsm::parse(&mut test_sequence, &mut nbt_parser)?;
+        let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor);
+        let mut nbttag_sequence = NbtTagSequence::new();
+        fsm::parse(&mut nbttag_sequence, &mut nbt_parser)?;
         
-        Ok(test_sequence)
+        Ok(nbttag_sequence)
     }
 
     pub fn new() -> NbtTagSequence {

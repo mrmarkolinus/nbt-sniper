@@ -47,16 +47,16 @@ impl NbtListParser {
     }
 }
 
-pub struct NbtParser {
+pub struct NbtParser <'a>{
     state: ParseNbtFsm,
     list_parser: NbtListParser,
-    cursor: Cursor<Vec<u8>>,
+    cursor: &'a mut Cursor<Vec<u8>>,
     index: usize,
     tree_depth: i64,
 }
 
-impl NbtParser {
-    pub fn new(state: ParseNbtFsm, cursor: Cursor<Vec<u8>>) -> NbtParser {
+impl<'a> NbtParser <'a>{
+    pub fn new(state: ParseNbtFsm, cursor: &mut Cursor<Vec<u8>>) -> NbtParser {
         NbtParser { state: state, 
                     list_parser: NbtListParser::new(),
                     cursor: cursor,
@@ -88,7 +88,7 @@ impl NbtParser {
 
 pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
     
-    let mut cursor = nbt_parser.cursor();
+    let mut cursor = &mut nbt_parser.cursor();
     let mut tag_id;
     let mut depth_delta= 0;
     let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
@@ -105,7 +105,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
 
         match nbt_parser.state() {
             ParseNbtFsm::Normal => {
-                tag_id = match parse::nbt_tag_id(&mut cursor) {
+                tag_id = match parse::nbt_tag_id(cursor) {
                     Ok(id) => {
                         match id {
                             Some(id) => id,
@@ -119,8 +119,8 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                     depth_delta -= 1;
                 }
                 else {
-                    tag_name = parse::nbt_tag_string(&mut cursor)?;    
-                    tag_value = parse::nbt_tag(&mut cursor, &tag_id)?;
+                    tag_name = parse::nbt_tag_string(cursor)?;    
+                    tag_value = parse::nbt_tag(cursor, &tag_id)?;
 
                     if let nbt::NbtTagType::List(ref list_elem_tag_ids) = tag_value {
                         nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
@@ -149,7 +149,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                 }
 
                 tag_name = "".to_string();
-                tag_value = parse::nbt_tag(&mut cursor, &tag_id).unwrap();
+                tag_value = parse::nbt_tag(cursor, &tag_id).unwrap();
 
                 if let nbt::NbtTagId::Compound = tag_id {
                     depth_delta += 1;
