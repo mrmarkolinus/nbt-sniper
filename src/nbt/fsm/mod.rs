@@ -5,7 +5,6 @@ mod parse;
 
 pub enum ParseNbtFsm {
     Normal,
-    NoAction,
     List,
     EndOfFile
 }
@@ -147,10 +146,6 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                 if let nbt::NbtTagId::Compound = tag_id {
                     depth_delta += 1;
                 }
-            },
-
-            ParseNbtFsm::NoAction => {
-                //shall never be reached. delete the state?
             },
 
             ParseNbtFsm::EndOfFile => {

@@ -110,11 +110,6 @@ pub fn nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &nbt::NbtTagId) -> Result<n
         },
 
         nbt::NbtTagId::List => {
-            /* let raw_tag_value = match NbtTag::parse_nbt_tag_string(cursor) {
-                //here we only store the nbt name and the type of the elements in the list, we parse the list in the next iterations
-                Ok(x) => x,
-                Err(e) => return Err(e),
-            }; */
             let list_elem_tag_ids =  match nbt_tag_id(cursor) {
                 None => return Err(nbt::NbtReadError::InvalidContent),
                 Some(list_elem_tag_ids) => list_elem_tag_ids,
@@ -128,11 +123,6 @@ pub fn nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &nbt::NbtTagId) -> Result<n
         },
         
         nbt::NbtTagId::Compound => {
-           /*  let compound_values = match NbtTag::parse_nbt_tag_string(cursor) {
-                //here we only store the nbt name, we parse the compound in the next iterations
-                Ok(values) => values,
-                Err(e) => return Err(e),
-            }; */
             nbt::NbtTagType::Compound("".to_string())
         },
         
