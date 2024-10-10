@@ -121,7 +121,7 @@ impl NbtTag {
     pub fn parse_from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTagSequence, NbtReadError> {
         let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor.clone());
         let mut test_sequence = NbtTagSequence::new();
-        fsm::parse(&mut test_sequence, &mut nbt_parser);
+        fsm::parse(&mut test_sequence, &mut nbt_parser)?;
         
         Ok(test_sequence)
     }

@@ -119,8 +119,8 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                     depth_delta -= 1;
                 }
                 else {
-                    tag_name = parse::nbt_tag_string(&mut cursor).unwrap();    
-                    tag_value = parse::nbt_tag(&mut cursor, &tag_id).unwrap();
+                    tag_name = parse::nbt_tag_string(&mut cursor)?;    
+                    tag_value = parse::nbt_tag(&mut cursor, &tag_id)?;
 
                     if let nbt::NbtTagType::List(ref list_elem_tag_ids) = tag_value {
                         nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
