@@ -48,6 +48,32 @@ pub struct NbtTag {
     depth: i64
 }
 
+impl NbtTag {
+    pub fn value(&self) -> &NbtTagType {
+        &self.value
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn byte_start(&self) -> u64 {
+        self.byte_start
+    }
+
+    pub fn byte_end(&self) -> u64 {
+        self.byte_end
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    pub fn depth(&self) -> i64 {
+        self.depth
+    }
+}
+
 #[derive(Debug)]
 pub enum NbtTagType {
     End(Option<u8>),
@@ -123,24 +149,4 @@ impl NbtTagSequence {
     pub fn nbt_tags(&self) -> &Vec<NbtTag> {
         &self.tags
     }
-}
-
-impl NbtTag {
-
-    pub fn value(&self) -> &NbtTagType {
-        &self.value
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn byte_start(&self) -> u64 {
-        self.byte_start
-    }
-
-    pub fn byte_end(&self) -> u64 {
-        self.byte_end
-    }
-
 }
