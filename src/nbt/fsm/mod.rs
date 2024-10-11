@@ -147,13 +147,17 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                     let gp_nbt_tag = test_sequence.tags[nbt_grandparent_index].value();
                     match gp_nbt_tag {
                         nbt::NbtTagType::List(_) => {
-                            nbt_parser.change_state_to(ParseNbtFsm::List);
-                            let previous_list_parser = match unfinished_lists.pop() { 
-                                Some(previous_list_parser) => previous_list_parser,
-                                None => return Err(nbt::NbtReadError::InvalidContent)
-                            };
+                            match unfinished_lists.pop() { 
+                                //the list of compounds was not yet finished
+                                Some(previous_list_parser) => {
+                                    nbt_parser.list_parser = previous_list_parser;
+                                    nbt_parser.change_state_to(ParseNbtFsm::List);
+                                }
+                                //the list of compounds was finished and we do not need to return to list state
+                                None => ()
+                            }
 
-                            nbt_parser.list_parser = previous_list_parser;
+                            
                         },
                         _ => {
                                //nothing to do 
@@ -180,30 +184,39 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
             },
 
             ParseNbtFsm::List => {
-                if nbt_parser.list_parser.is_end() {
-                    tag_id = *nbt_parser.list_parser.tag_id();
-                    nbt_parser.list_parser.reset();
-                    nbt_parser.change_state_to(ParseNbtFsm::Normal); 
-                    depth_delta -= 1;
-                }
-                else {
-                    nbt_parser.list_parser.increment(); 
-                    tag_id = *nbt_parser.list_parser.tag_id();            
-                }
-
+                tag_id = *nbt_parser.list_parser.tag_id();
                 tag_name = "".to_string();
                 tag_value = parse::nbt_tag(cursor, &tag_id).unwrap();
-
-                if let nbt::NbtTagId::Compound = tag_id {
-                    depth_delta += 1;
-
-                    // if we are in a list of compound, we need to exist the list parser and go back to normal
-                    // but we also need to store the point in the list were we are
-                    nbt_parser.change_state_to(ParseNbtFsm::Normal);
-                    unfinished_lists.push(nbt_parser.list_parser.clone());
+                
+                if nbt_parser.list_parser.is_end() {   
+                    nbt_parser.change_state_to(ParseNbtFsm::Normal); 
                     nbt_parser.list_parser.reset();
-                }
+                    
+                    if let nbt::NbtTagId::Compound = tag_id {
+                        depth_delta += 1;
 
+                        // if we are in a list of compound, we need to exist the list parser and go back to normal
+                        // the list is finished, so we do not need to store the list parser status
+                        nbt_parser.change_state_to(ParseNbtFsm::Normal);
+                    }
+                    else {
+                        depth_delta -= 1 
+                    }
+
+                }
+                else {
+                    nbt_parser.list_parser.increment();       
+
+                    if let nbt::NbtTagId::Compound = tag_id {
+                        depth_delta += 1;
+    
+                        // if we are in a list of compound, we need to exist the list parser and go back to normal
+                        // but we also need to store the point in the list were we are
+                        nbt_parser.change_state_to(ParseNbtFsm::Normal);
+                        unfinished_lists.push(nbt_parser.list_parser.clone());
+                        nbt_parser.list_parser.reset();
+                    }
+                }
                 
             },
 
