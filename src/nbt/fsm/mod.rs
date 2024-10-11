@@ -87,6 +87,38 @@ impl<'a> NbtParser <'a>{
     }
 }
 
+fn set_new_parent_index(tag_sequence : &mut nbt::NbtTagSequence, depth_delta: &i64, nbt_parser: &mut NbtParser, nbt_parent_index: &mut usize) -> Result<(), nbt::NbtReadError> {
+
+    match depth_delta {
+        0 => {
+            // nothing to do, old parent remains valid since we didnt go deeper
+            },
+        1 => {
+            // we moved down in the nbt tree. This tag is the children of the tag in previous depth level
+            *nbt_parent_index = nbt_parser.index() - 1; 
+        },
+        -1 => {
+            //we moved up in the nbt tree. we need to restore the previous parent index
+            //the new parent is the parent of the previous parent
+            *nbt_parent_index = tag_sequence.tags[*nbt_parent_index].parent(); 
+        },
+        -2 => {
+            //we moved up in the nbt tree. we need to restore the previous parent index
+            //this case is only hit when a list of compound is finished
+            // -1 because we exit the compound
+            // -1 because we exit the list
+            let nbt_grandparent_index = tag_sequence.tags[*nbt_parent_index].parent();
+            *nbt_parent_index = tag_sequence.tags[nbt_grandparent_index].parent(); 
+        }
+        _ => {
+            //this should never happen, because delta_depth can only be -2, -1, 0, 1
+            return Err(nbt::NbtReadError::InvalidNbtDepth)
+        }
+    }
+
+    Ok(())
+}
+
 pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
     
     let cursor = &mut nbt_parser.cursor();
@@ -107,28 +139,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
         let mut tag_value = nbt::NbtTagType::End(None);
         
         nbt_parser.tree_depth+=depth_delta;
-        //depth_vector.push(nbt_parser.tree_depth);
-        
-        if depth_delta == 1 {
-            // we moved down in the nbt tree. This tag is the children of the tag in previous depth level
-            //nbt_grandparent_index = nbt_parent_index;
-            nbt_parent_index = *nbt_parser.index() - 1;        
-            
-        }
-        else if depth_delta == -1 {
-            //we moved up in the nbt tree. we need to restore the previous parent index
-            //the new parent is the parent of the previous parent
-            //for _ in 0..nbt_parser.tree_depth {
-                nbt_parent_index = test_sequence.tags[nbt_parent_index].parent(); 
-            //} 
-        }
-        else if depth_delta == -2 {
-            //we moved up in the nbt tree. we need to restore the previous parent index
-            //this case is only hit when a list of compound is finished
-                let nbt_grandparent_index = test_sequence.tags[nbt_parent_index].parent();
-                nbt_parent_index = test_sequence.tags[nbt_grandparent_index].parent(); 
-        }
-        
+        set_new_parent_index(test_sequence, &depth_delta, nbt_parser, &mut nbt_parent_index)?;
         depth_delta = 0;
 
         match nbt_parser.state() {
@@ -191,7 +202,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
             ParseNbtFsm::List => {
                 tag_id = *nbt_parser.list_parser.tag_id();
                 tag_name = "".to_string();
-                tag_value = parse::nbt_tag(cursor, &tag_id).unwrap();
+                tag_value = parse::nbt_tag(cursor, &tag_id)?;
                 
                 if nbt_parser.list_parser.is_end() {   
                     nbt_parser.change_state_to(ParseNbtFsm::Normal); 
@@ -222,6 +233,8 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                         nbt_parser.list_parser.reset();
                     }
                 }
+
+
                 
             },
 

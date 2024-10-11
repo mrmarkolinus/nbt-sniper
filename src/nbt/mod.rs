@@ -14,6 +14,9 @@ pub enum NbtReadError {
     
     #[error("Invalid NBT Tag Id")]
     InvalidContent,  // Custom error for content validation
+
+    #[error("Invalid NBT Tree Depth")]
+    InvalidNbtDepth,  // Custom error for tag id validation
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -130,6 +133,7 @@ impl NbtTag {
     pub fn parent(&self) -> usize {
         self.parent
     }
+
 }
 
 
