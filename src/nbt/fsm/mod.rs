@@ -115,8 +115,55 @@ fn set_new_parent_index(tag_sequence : &mut nbt::NbtTagSequence, depth_delta: &i
             return Err(nbt::NbtReadError::InvalidNbtDepth)
         }
     }
-
     Ok(())
+}
+
+fn store_list_ctx(unfinished_lists: &mut Vec<NbtListParser>, nbt_parser: &mut NbtParser) {
+    unfinished_lists.push(nbt_parser.list_parser.clone());
+    nbt_parser.list_parser.reset();
+}
+
+fn restore_list_ctx(unfinished_lists: &mut Vec<NbtListParser>, nbt_parser: &mut NbtParser) -> bool {
+    match unfinished_lists.pop() { 
+        //the list of compounds was not yet finished, restore the ctx
+        Some(previous_list_parser) => {
+            nbt_parser.list_parser = previous_list_parser;
+            true
+        }
+        // the list of compounds was finished and we do not need to restore the ctx
+        // only in this case we will have a depth_delta of -2 because
+        // compound is finished (=-1) and the list as well (=-1)
+        None => false
+    } 
+}
+
+fn exit_nbttag_compound(tag_sequence : &mut nbt::NbtTagSequence, unfinished_lists: &mut Vec<NbtListParser>, nbt_parser: &mut NbtParser, nbt_parent_index: usize) -> i64{
+    
+    let mut depth_delta = -1;
+
+    // the tag End is the last in a compound, so its parent is the compound
+    // if the grandparent is a list, we need to change the state back to list
+    // because reading a list is different than reading any other tag
+    let nbt_grandparent_index = tag_sequence.tags[nbt_parent_index].parent();
+    let gp_nbt_tag = tag_sequence.tags[nbt_grandparent_index].value();
+    
+    match gp_nbt_tag {
+        nbt::NbtTagType::List(_) => {
+            if restore_list_ctx(unfinished_lists, nbt_parser) {
+                nbt_parser.change_state_to(ParseNbtFsm::List);
+            }
+            else {
+                // only in this case we will have a depth_delta of -2 because
+                // compound is finished (=-1) and the list as well (=-1)
+                depth_delta -= 1;
+            }
+            
+        },
+        _ => {
+            //nothing to do 
+        }
+    }
+    depth_delta
 }
 
 pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
@@ -125,10 +172,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
     let mut tag_id;
     let mut depth_delta= 0;
     let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
-    
     let mut nbt_parent_index = 0;
-    //let mut nbt_grandparent_index = 0;
-
     let mut unfinished_lists = Vec::new();
 
     cursor.seek(SeekFrom::Start(0)).unwrap();
@@ -155,31 +199,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                 };
 
                 if let nbt::NbtTagId::End = tag_id {
-                    depth_delta -= 1;
-
-                    // the tag End is the last in a compound, so its parent is the compound
-                    // if the grandparent is a list, we need to change the state back to list
-                    // because reading a list is different than reading any other tag
-                    let nbt_grandparent_index = test_sequence.tags[nbt_parent_index].parent();
-                    let gp_nbt_tag = test_sequence.tags[nbt_grandparent_index].value();
-                    match gp_nbt_tag {
-                        nbt::NbtTagType::List(_) => {
-                            match unfinished_lists.pop() { 
-                                //the list of compounds was not yet finished
-                                Some(previous_list_parser) => {
-                                    nbt_parser.list_parser = previous_list_parser;
-                                    nbt_parser.change_state_to(ParseNbtFsm::List);
-                                }
-                                // the list of compounds was finished and we do not need to return to list state
-                                // only in this case we will have a depth_delta of -2 because
-                                // compound is finished (=-1) and the list as well (=-1)
-                                None => {depth_delta -= 1;}
-                            } 
-                        },
-                        _ => {
-                            //nothing to do 
-                        }
-                    }
+                    depth_delta = exit_nbttag_compound(test_sequence, &mut unfinished_lists, nbt_parser, nbt_parent_index);
                 }
                 else {
                     tag_name = parse::nbt_tag_string(cursor)?;    
@@ -210,7 +230,6 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                     
                     if let nbt::NbtTagId::Compound = tag_id {
                         depth_delta += 1;
-
                         // if we are in a list of compound, we need to exist the list parser and go back to normal
                         // the list is finished, so we do not need to store the list parser status
                         nbt_parser.change_state_to(ParseNbtFsm::Normal);
@@ -218,10 +237,9 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                     else {
                         depth_delta -= 1 
                     }
-
                 }
                 else {
-                    nbt_parser.list_parser.increment();       
+                    nbt_parser.list_parser.increment();  
 
                     if let nbt::NbtTagId::Compound = tag_id {
                         depth_delta += 1;
@@ -229,13 +247,9 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                         // if we are in a list of compound, we need to exist the list parser and go back to normal
                         // but we also need to store the point in the list were we are
                         nbt_parser.change_state_to(ParseNbtFsm::Normal);
-                        unfinished_lists.push(nbt_parser.list_parser.clone());
-                        nbt_parser.list_parser.reset();
+                        store_list_ctx(&mut unfinished_lists, nbt_parser);
                     }
                 }
-
-
-                
             },
 
             ParseNbtFsm::EndOfFile => {
