@@ -9,6 +9,7 @@ pub enum ParseNbtFsm {
     EndOfFile
 }
 
+#[derive(Debug, Clone)]
 struct NbtListParser {
     list_tag_id: nbt::NbtTagId,
     list_len: i32,
@@ -94,9 +95,9 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
     let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
     
     let mut nbt_parent_index = 0;
-    let mut nbt_grandparent_index = 0;
+    //let mut nbt_grandparent_index = 0;
 
-    //let mut depth_vector = Vec::new();
+    let mut unfinished_lists = Vec::new();
 
     cursor.seek(SeekFrom::Start(0)).unwrap();
     loop {
@@ -138,6 +139,27 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
 
                 if let nbt::NbtTagId::End = tag_id {
                     depth_delta -= 1;
+
+                    // the tag End is the last in a compound, so its parent is the compound
+                    // if the grandparent is a list, we need to change the state back to list
+                    // because reading a list is different than reading any other tag
+                    let nbt_grandparent_index = test_sequence.tags[nbt_parent_index].parent();
+                    let gp_nbt_tag = test_sequence.tags[nbt_grandparent_index].value();
+                    match gp_nbt_tag {
+                        nbt::NbtTagType::List(_) => {
+                            nbt_parser.change_state_to(ParseNbtFsm::List);
+                            let previous_list_parser = match unfinished_lists.pop() { 
+                                Some(previous_list_parser) => previous_list_parser,
+                                None => return Err(nbt::NbtReadError::InvalidContent)
+                            };
+
+                            nbt_parser.list_parser = previous_list_parser;
+                        },
+                        _ => {
+                               //nothing to do 
+                            }
+                    }
+    
                 }
                 else {
                     tag_name = parse::nbt_tag_string(cursor)?;    
@@ -174,7 +196,15 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
 
                 if let nbt::NbtTagId::Compound = tag_id {
                     depth_delta += 1;
+
+                    // if we are in a list of compound, we need to exist the list parser and go back to normal
+                    // but we also need to store the point in the list were we are
+                    nbt_parser.change_state_to(ParseNbtFsm::Normal);
+                    unfinished_lists.push(nbt_parser.list_parser.clone());
+                    nbt_parser.list_parser.reset();
                 }
+
+                
             },
 
             ParseNbtFsm::EndOfFile => {
