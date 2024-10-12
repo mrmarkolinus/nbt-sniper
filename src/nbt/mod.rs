@@ -145,9 +145,9 @@ pub struct NbtData <'a>{
 impl<'a> NbtData<'a> {
 
     pub fn from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtData, NbtReadError> {
-        let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor);
+        let nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor);
         let mut nbt_data = NbtData::new(nbt_parser);
-        //fsm::parse(&mut nbttag_sequence, &mut nbt_parser)?;
+        nbt_data.parse()?;
         
         Ok(nbt_data)
     }
