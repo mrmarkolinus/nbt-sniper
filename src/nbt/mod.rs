@@ -178,7 +178,7 @@ impl NbtTag {
 pub struct NbtData {
     tags: Vec<NbtTag>,
     nbt_parser: fsm::NbtParser,
-    raw_bytes: Cursor<Vec<u8>>,
+    raw_bytes: Vec<u8>,
 }
 
 impl NbtData {
@@ -195,7 +195,7 @@ impl NbtData {
         NbtData { 
             tags: Vec::<NbtTag>::new(),
             nbt_parser: fsm::NbtParser::new(fsm::ParseNbtFsm::Normal),
-            raw_bytes: Cursor::new(file_buffer)
+            raw_bytes: file_buffer
         }  
     }
 
@@ -203,6 +203,9 @@ impl NbtData {
         &self.tags
     }
 
+    pub fn raw_bytes(&self) -> &Vec<u8> {
+        &self.raw_bytes
+    }
 
     fn parse(&mut self) -> Result<(), NbtReadError> {
         
@@ -220,7 +223,7 @@ impl NbtData {
                                                 children: Vec::new()};  
 
         // #01 Initialize auxiliary information for parsing and building the NbtTag tree
-        let mut cursor = self.raw_bytes.clone();
+        let mut cursor = Cursor::new(self.raw_bytes.clone());
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
         let mut nbt_parent_index = 0;
         let mut depth_delta= 0;
@@ -426,7 +429,7 @@ impl NbtData {
         depth_delta
     }
     
-    fn parse_tag_id_name_and_value(&mut self, nbt_parent_index: usize) -> Result<(NbtTagId, String, NbtTagType, i64), NbtReadError> {
+    /* fn parse_tag_id_name_and_value(&mut self, nbt_parent_index: usize) -> Result<(NbtTagId, String, NbtTagType, i64), NbtReadError> {
         
         let mut tag_name = String::new();
         let mut tag_value = NbtTagType::End(None);
@@ -464,6 +467,6 @@ impl NbtData {
     
         Ok((tag_id, tag_name, tag_value, depth_delta))
     }
-    
+     */
     
 }
