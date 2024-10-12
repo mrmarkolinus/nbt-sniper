@@ -1,9 +1,8 @@
 use flate2::read::GzDecoder;
-use nbt::NbtData;
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
-use std::io::Cursor;
+use serde_json;
 
 
 pub mod nbt;
@@ -16,7 +15,8 @@ fn main() {
     
     //test_tag.iter().for_each(|x| println!("{:?}", x));
     //test_tag.iter().for_each(|x| format_tag(x));
-    format_output(&nbtdata);
+    //format_output(&nbtdata);
+    output_json(&nbtdata);
 }
 
 fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
@@ -45,6 +45,14 @@ fn format_output(nbtdata: &nbt::NbtData) {
         println!();
     }
 
+}
+
+fn output_json(nbtdata: &nbt::NbtData) {
+    // Convert the Vec to a JSON string
+    let json_output = serde_json::to_string_pretty(&nbtdata.nbt_tags()).unwrap();
+
+    // Print the JSON
+    println!("{}", json_output);
 }
 
 fn format_output_raw(nbtdata: &nbt::NbtData) {

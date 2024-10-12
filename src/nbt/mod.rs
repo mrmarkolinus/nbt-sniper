@@ -1,7 +1,8 @@
 use std::io::{Cursor, Seek, SeekFrom};
-
 use thiserror::Error;
 use std::io;
+use serde::Serialize;
+use serde_json;
 
 mod fsm;
 
@@ -17,7 +18,7 @@ pub enum NbtReadError {
     InvalidNbtDepth,  // Custom error for tag id validation
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum NbtTagId {
     End = 0,
     Byte = 1,
@@ -74,7 +75,7 @@ impl NbtTagId {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum NbtTagType {
     End(Option<u8>),
     Byte(i8),
@@ -91,7 +92,7 @@ pub enum NbtTagType {
     LongArray(Vec<i64>),
 }
 
-#[derive(Debug, Clone)] 
+#[derive(Debug, Clone, Serialize)] 
 pub struct NbtTag {
     name: String,
     value: NbtTagType,
