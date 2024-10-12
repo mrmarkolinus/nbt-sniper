@@ -87,7 +87,7 @@ impl<'a> NbtParser <'a>{
     }
 }
 
-fn set_new_parent_index(tag_sequence : &mut nbt::NbtTagSequence, depth_delta: &i64, nbt_parser: &mut NbtParser, nbt_parent_index: &mut usize) -> Result<(), nbt::NbtReadError> {
+fn set_new_parent_index(tag_sequence : &mut nbt::NbtData, depth_delta: &i64, nbt_parser: &mut NbtParser, nbt_parent_index: &mut usize) -> Result<(), nbt::NbtReadError> {
 
     match depth_delta {
         0 => {
@@ -137,7 +137,7 @@ fn restore_list_ctx(unfinished_lists: &mut Vec<NbtListParser>, nbt_parser: &mut 
     } 
 }
 
-fn exit_nbttag_compound(tag_sequence : &mut nbt::NbtTagSequence, unfinished_lists: &mut Vec<NbtListParser>, nbt_parser: &mut NbtParser, nbt_parent_index: usize) -> i64{
+fn exit_nbttag_compound(tag_sequence : &mut nbt::NbtData, unfinished_lists: &mut Vec<NbtListParser>, nbt_parser: &mut NbtParser, nbt_parent_index: usize) -> i64{
     
     let mut depth_delta = -1;
 
@@ -166,16 +166,16 @@ fn exit_nbttag_compound(tag_sequence : &mut nbt::NbtTagSequence, unfinished_list
     depth_delta
 }
 
-fn parse_tag_id_name_and_value( tag_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser, 
+fn parse_tag_id_name_and_value( tag_sequence : &mut nbt::NbtData, nbt_parser: &mut NbtParser, 
                                 unfinished_lists: &mut Vec<NbtListParser>,nbt_parent_index: usize) 
                                 -> Result<(nbt::NbtTagId, String, nbt::NbtTagType, i64), nbt::NbtReadError> {
     
     let mut tag_name = String::new();
     let mut tag_value = nbt::NbtTagType::End(None);
     let mut depth_delta = 0;
-    let cursor = &mut nbt_parser.cursor();
+    //let mut cursor = nbt_parser.cursor();
     
-    let tag_id = match parse::nbt_tag_id(cursor) {
+    let tag_id = match parse::nbt_tag_id(&mut nbt_parser.cursor()) {
         Ok(id) => {
             match id {
                 Some(id) => id,
@@ -185,7 +185,7 @@ fn parse_tag_id_name_and_value( tag_sequence : &mut nbt::NbtTagSequence, nbt_par
         Err(e) => return Err(e)
     };
 
-    if let nbt::NbtTagId::End = tag_id {
+    /* if let nbt::NbtTagId::End = tag_id {
         depth_delta = exit_nbttag_compound(tag_sequence, unfinished_lists, nbt_parser, nbt_parent_index);
     }
     else {
@@ -202,12 +202,12 @@ fn parse_tag_id_name_and_value( tag_sequence : &mut nbt::NbtTagSequence, nbt_par
         if let nbt::NbtTagId::Compound = tag_id {
             depth_delta += 1;
         }
-    }
+    } */
 
     Ok((tag_id, tag_name, tag_value, depth_delta))
 }
 
-pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
+pub fn parse(test_sequence : &mut nbt::NbtData, nbt_parser: &mut NbtParser) -> Result<(), nbt::NbtReadError> {
     
     let cursor = &mut nbt_parser.cursor();
     let mut tag_id;
@@ -216,12 +216,16 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
     let mut nbt_parent_index = 0;
     let mut unfinished_lists = Vec::new();
 
-    cursor.seek(SeekFrom::Start(0)).unwrap();
-    loop {
+    let mut byte_start;   
+    let mut tag_name;
+    let mut tag_value;
 
-        let byte_start = cursor.position();   
-        let mut tag_name = String::new();
-        let mut tag_value = nbt::NbtTagType::End(None);
+    cursor.seek(SeekFrom::Start(0)).unwrap();
+    
+    loop {
+        byte_start = cursor.position();   
+        tag_name = String::new();
+        tag_value = nbt::NbtTagType::End(None);
         
         nbt_parser.tree_depth+=depth_delta;
         set_new_parent_index(test_sequence, &depth_delta, nbt_parser, &mut nbt_parent_index)?;
@@ -230,7 +234,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
         match nbt_parser.state() {
             ParseNbtFsm::Normal => {
                 //(tag_id, tag_name, tag_value, depth_delta) = parse_tag_id_name_and_value(test_sequence, nbt_parser, &mut unfinished_lists, nbt_parent_index)?;
-                 tag_id = match parse::nbt_tag_id(cursor) {
+                  tag_id = match parse::nbt_tag_id(cursor) {
                     Ok(id) => {
                         match id {
                             Some(id) => id,
@@ -238,7 +242,7 @@ pub fn parse(test_sequence : &mut nbt::NbtTagSequence, nbt_parser: &mut NbtParse
                         }
                     },
                     Err(e) => return Err(e)
-                };
+                }; 
 
                 if let nbt::NbtTagId::End = tag_id {
                     depth_delta = exit_nbttag_compound(test_sequence, &mut unfinished_lists, nbt_parser, nbt_parent_index);

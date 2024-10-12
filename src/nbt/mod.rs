@@ -137,22 +137,22 @@ impl NbtTag {
 }
 
 
-pub struct NbtTagSequence {
+pub struct NbtData {
     tags: Vec<NbtTag>,
 }
 
-impl NbtTagSequence {
+impl NbtData {
 
-    pub fn from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtTagSequence, NbtReadError> {
+    pub fn from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtData, NbtReadError> {
         let mut nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor);
-        let mut nbttag_sequence = NbtTagSequence::new();
+        let mut nbttag_sequence = NbtData::new();
         fsm::parse(&mut nbttag_sequence, &mut nbt_parser)?;
         
         Ok(nbttag_sequence)
     }
 
-    pub fn new() -> NbtTagSequence {
-        NbtTagSequence { tags: Vec::<NbtTag>::new() } 
+    pub fn new() -> NbtData {
+        NbtData { tags: Vec::<NbtTag>::new() } 
     }
 
     pub fn nbt_tags(&self) -> &Vec<NbtTag> {
