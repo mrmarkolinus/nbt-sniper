@@ -353,6 +353,9 @@ impl<'a> NbtData<'a> {
                 else {
                     // only in this case we will have a depth_delta of -2 because
                     // compound is finished (=-1) and the list as well (=-1)
+                    
+                    //TOTO: i think there could be a bug here if we are the end of two lists
+                    // example: list of compounds of list of compounds
                     depth_delta -= 1;
                 }
                 
