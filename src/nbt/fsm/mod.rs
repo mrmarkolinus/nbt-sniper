@@ -1,5 +1,4 @@
 use crate::nbt;
-use std::io::{Cursor, Seek, SeekFrom};
 
 pub mod parse;
 

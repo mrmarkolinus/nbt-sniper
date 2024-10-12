@@ -35,10 +35,12 @@ fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
 fn format_output(nbtdata: &nbt::NbtData) {
     
     for nbttag in nbtdata.nbt_tags() {
-        for i in 0..nbttag.depth() {
-            print!("--");
+        if nbttag.depth() > 0 {
+            print!("|");  
         }
-        print!(">");
+        for i in 0..nbttag.depth() {
+            print!("___");
+        }
         display_tag(nbttag.value(), nbttag.name());
         println!();
     }

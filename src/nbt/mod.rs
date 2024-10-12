@@ -1,6 +1,3 @@
-use byteorder::{BigEndian, ReadBytesExt};
-use fsm::NbtParser;
-use core::{panic, str};
 use std::io::{Cursor, Seek, SeekFrom};
 
 use thiserror::Error;
