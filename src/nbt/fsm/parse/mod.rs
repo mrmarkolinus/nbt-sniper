@@ -4,7 +4,6 @@ use std::io::Cursor;
 
 use crate::nbt;
 
-
 pub fn nbt_tag_id(cursor: &mut Cursor<Vec<u8>>) -> Result<Option<nbt::NbtTagId>, nbt::NbtReadError> {
     let id = cursor.read_u8()?;
     

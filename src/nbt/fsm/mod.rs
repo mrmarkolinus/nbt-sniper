@@ -1,7 +1,7 @@
 use crate::nbt;
 use std::io::{Cursor, Seek, SeekFrom};
 
-mod parse;
+pub mod parse;
 
 pub enum ParseNbtFsm {
     Normal,
@@ -10,7 +10,7 @@ pub enum ParseNbtFsm {
 }
 
 #[derive(Debug, Clone)]
-struct NbtListParser {
+pub struct NbtListParser {
     list_tag_id: nbt::NbtTagId,
     list_len: i32,
     list_elem_count: i32,
@@ -50,7 +50,8 @@ impl NbtListParser {
 
 pub struct NbtParser <'a>{
     state: ParseNbtFsm,
-    list_parser: NbtListParser,
+    pub list_parser: NbtListParser,
+    pub unfinished_lists: Vec<NbtListParser>,
     cursor: &'a mut Cursor<Vec<u8>>,
     index: usize,
     tree_depth: i64,
@@ -60,6 +61,7 @@ impl<'a> NbtParser <'a>{
     pub fn new(state: ParseNbtFsm, cursor: &mut Cursor<Vec<u8>>) -> NbtParser {
         NbtParser { state: state, 
                     list_parser: NbtListParser::new(),
+                    unfinished_lists: Vec::<NbtListParser>::new(),
                     cursor: cursor,
                     index: 0,
                     tree_depth: 0
@@ -82,11 +84,20 @@ impl<'a> NbtParser <'a>{
         &self.index
     }
 
+    pub fn tree_depth(&self) -> &i64 {
+        &self.tree_depth
+    }
+
+    pub fn set_tree_depth(&mut self, depth: i64) {
+        self.tree_depth = depth;
+    }
+
     pub fn increment_index(&mut self) {
         self.index = self.index + 1;
     }
-}
 
+}
+/* 
 fn set_new_parent_index(tag_sequence : &mut nbt::NbtData, depth_delta: &i64, nbt_parser: &mut NbtParser, nbt_parent_index: &mut usize) -> Result<(), nbt::NbtReadError> {
 
     match depth_delta {
@@ -324,4 +335,4 @@ pub fn parse(test_sequence : &mut nbt::NbtData, nbt_parser: &mut NbtParser) -> R
     }
 
     Ok(())
-}
+} */
