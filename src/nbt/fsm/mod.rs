@@ -48,21 +48,21 @@ impl NbtListParser {
     }
 }
 
-pub struct NbtParser <'a>{
+pub struct NbtParser {
     state: ParseNbtFsm,
     pub list_parser: NbtListParser,
     pub unfinished_lists: Vec<NbtListParser>,
-    cursor: &'a mut Cursor<Vec<u8>>,
+    //cursor: &'a mut Cursor<Vec<u8>>,
     index: usize,
     tree_depth: i64,
 }
 
-impl<'a> NbtParser <'a>{
-    pub fn new(state: ParseNbtFsm, cursor: &mut Cursor<Vec<u8>>) -> NbtParser {
+impl NbtParser {
+    pub fn new(state: ParseNbtFsm) -> NbtParser {
         NbtParser { state: state, 
                     list_parser: NbtListParser::new(),
                     unfinished_lists: Vec::<NbtListParser>::new(),
-                    cursor: cursor,
+                    //cursor: cursor,
                     index: 0,
                     tree_depth: 0
                     }
@@ -76,9 +76,9 @@ impl<'a> NbtParser <'a>{
         &self.state
     }
 
-    pub fn cursor(&mut self) -> Cursor<Vec<u8>> {
+    /* pub fn cursor(&mut self) -> Cursor<Vec<u8>> {
         self.cursor.clone() //TODO: use &mut self.cursor
-    }
+    } */
 
     pub fn index(&self) -> &usize {
         &self.index

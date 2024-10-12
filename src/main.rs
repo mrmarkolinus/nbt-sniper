@@ -9,15 +9,14 @@ pub mod nbt;
 
 fn main() {
     let buffer = read_file("files/bigtest.nbt").unwrap();
-    let mut cursor = Cursor::new(buffer);
 
-    let test_tag_sequence = nbt::NbtData::from_buf(&mut cursor).unwrap();
+    let test_tag_sequence = nbt::NbtData::from_buf(buffer).unwrap();
     
     let test_tag = test_tag_sequence.nbt_tags();
     
     test_tag.iter().for_each(|x| println!("{:?}", x));
     //test_tag.iter().for_each(|x| format_tag(x));
-    format_output(&test_tag, cursor.clone());
+    //format_output(&test_tag, cursor);
 }
 
 fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {

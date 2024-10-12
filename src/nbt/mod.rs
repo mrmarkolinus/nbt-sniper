@@ -1,4 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt};
+use fsm::NbtParser;
 use core::{panic, str};
 use std::io::{Cursor, Seek, SeekFrom};
 
@@ -174,31 +175,34 @@ impl NbtTag {
 }
 
 
-pub struct NbtData <'a>{
+pub struct NbtData {
     tags: Vec<NbtTag>,
-    nbt_parser: fsm::NbtParser<'a>
+    nbt_parser: fsm::NbtParser,
+    raw_bytes: Cursor<Vec<u8>>,
 }
 
-impl<'a> NbtData<'a> {
+impl NbtData {
 
-    pub fn from_buf(cursor: &mut Cursor<Vec<u8>>) -> Result<NbtData, NbtReadError> {
-        let nbt_parser = fsm::NbtParser::new(fsm::ParseNbtFsm::Normal, cursor);
-        let mut nbt_data = NbtData::new(nbt_parser);
+    pub fn from_buf(file_buffer: Vec<u8>) -> Result<NbtData, NbtReadError> {
+
+        let mut nbt_data = NbtData::new(file_buffer);
         nbt_data.parse()?;
         
         Ok(nbt_data)
     }
 
-    pub fn new(nbt_parser: fsm::NbtParser<'a>) -> NbtData {
+    pub fn new(file_buffer: Vec<u8>) -> NbtData {
         NbtData { 
             tags: Vec::<NbtTag>::new(),
-            nbt_parser: nbt_parser,
-        } 
+            nbt_parser: fsm::NbtParser::new(fsm::ParseNbtFsm::Normal),
+            raw_bytes: Cursor::new(file_buffer)
+        }  
     }
 
     pub fn nbt_tags(&self) -> &Vec<NbtTag> {
         &self.tags
     }
+
 
     fn parse(&mut self) -> Result<(), NbtReadError> {
         
@@ -216,7 +220,7 @@ impl<'a> NbtData<'a> {
                                                 children: Vec::new()};  
 
         // #01 Initialize auxiliary information for parsing and building the NbtTag tree
-        let cursor = &mut self.nbt_parser.cursor();
+        let mut cursor = self.raw_bytes.clone();
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
         let mut nbt_parent_index = 0;
         let mut depth_delta= 0;
@@ -244,7 +248,7 @@ impl<'a> NbtData<'a> {
             match self.nbt_parser.state() {
                 fsm::ParseNbtFsm::Normal => {
                     //(tag_id, tag_name, tag_value, depth_delta) = parse_tag_id_name_and_value(test_sequence, nbt_parser, &mut unfinished_lists, nbt_parent_index)?;
-                      tag_id = match fsm::parse::nbt_tag_id(cursor) {
+                      tag_id = match fsm::parse::nbt_tag_id(&mut cursor) {
                         Ok(id) => {
                             match id {
                                 Some(id) => id,
@@ -258,8 +262,8 @@ impl<'a> NbtData<'a> {
                         depth_delta = self.exit_nbttag_compound(nbt_parent_index);
                     }
                     else {
-                        new_nbt_tag.set_name(fsm::parse::nbt_tag_string(cursor)?);    
-                        new_nbt_tag.set_value(fsm::parse::nbt_tag(cursor, &tag_id)?);
+                        new_nbt_tag.set_name(fsm::parse::nbt_tag_string(&mut cursor)?);    
+                        new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
     
                         if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
                             self.nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
@@ -278,7 +282,7 @@ impl<'a> NbtData<'a> {
                 fsm::ParseNbtFsm::List => {
                     tag_id = *self.nbt_parser.list_parser.tag_id();
                     new_nbt_tag.set_name("".to_string());
-                    new_nbt_tag.set_value(fsm::parse::nbt_tag(cursor, &tag_id)?);
+                    new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
                     
                     if self.nbt_parser.list_parser.is_end() {   
                         self.nbt_parser.change_state_to(fsm::ParseNbtFsm::Normal); 
@@ -336,7 +340,7 @@ impl<'a> NbtData<'a> {
         self.tags[nbt_parent_index].set_byte_end_with_children(new_nbt_tag.byte_end());
     }
 
-    fn set_new_parent_index(&self, depth_delta: i64, nbt_parent_index: &mut usize) -> Result<(), NbtReadError> {
+    fn set_new_parent_index(&mut self, depth_delta: i64, nbt_parent_index: &mut usize) -> Result<(), NbtReadError> {
 
         match depth_delta {
             0 => {
@@ -427,9 +431,9 @@ impl<'a> NbtData<'a> {
         let mut tag_name = String::new();
         let mut tag_value = NbtTagType::End(None);
         let mut depth_delta = 0;
-        //let mut cursor = nbt_parser.cursor();
+        let mut cursor = &mut self.raw_bytes;
         
-        let tag_id = match fsm::parse::nbt_tag_id(&mut self.nbt_parser.cursor()) {
+        let tag_id = match fsm::parse::nbt_tag_id(cursor) {
             Ok(id) => {
                 match id {
                     Some(id) => id,
