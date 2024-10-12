@@ -3,6 +3,7 @@ use std::fs;
 use std::io::BufReader;
 use std::io::Read;
 use serde_json;
+use std::fs::File;
 
 
 pub mod nbt;
@@ -49,10 +50,17 @@ fn format_output(nbtdata: &nbt::NbtData) {
 
 fn output_json(nbtdata: &nbt::NbtData) {
     // Convert the Vec to a JSON string
-    let json_output = serde_json::to_string_pretty(&nbtdata.nbt_tags()).unwrap();
+    //let json_output = serde_json::to_string_pretty(&nbtdata.nbt_tags()).unwrap();
 
     // Print the JSON
-    println!("{}", json_output);
+    //println!("{}", json_output);
+
+    // Open (or create) a file to write to
+    let file_path = "output.json";
+    let file = File::create(file_path).expect("Impossible to create file");
+
+    // Write the JSON to the file
+    serde_json::to_writer_pretty(file, &nbtdata.nbt_tags()).unwrap();
 }
 
 fn format_output_raw(nbtdata: &nbt::NbtData) {
