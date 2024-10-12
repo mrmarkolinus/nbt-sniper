@@ -76,7 +76,7 @@ impl NbtTagId {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NbtTagType {
     End(Option<u8>),
     Byte(i8),
@@ -93,7 +93,7 @@ pub enum NbtTagType {
     LongArray(Vec<i64>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)] 
 pub struct NbtTag {
     name: String,
     value: NbtTagType,
@@ -110,28 +110,56 @@ impl NbtTag {
         &self.value
     }
 
+    pub fn set_value(&mut self, value: NbtTagType) {
+        self.value = value;
+    }
+
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
     }
 
     pub fn byte_start(&self) -> u64 {
         self.byte_start
     }
 
+    pub fn set_byte_start(&mut self, byte_start: u64) {
+        self.byte_start = byte_start;
+    }
+
     pub fn byte_end(&self) -> u64 {
         self.byte_end
+    }
+
+    pub fn set_byte_end(&mut self, byte_end: u64) {
+        self.byte_end = byte_end;
     }
 
     pub fn index(&self) -> usize {
         self.index
     }
 
+    pub fn set_index(&mut self, index: usize) {
+        self.index = index;
+    }   
+
     pub fn depth(&self) -> i64 {
         self.depth
     }
 
+    pub fn set_depth(&mut self, depth: i64) {
+        self.depth = depth;
+    }
+
     pub fn parent(&self) -> usize {
         self.parent
+    }
+
+    pub fn set_parent(&mut self, parent: usize) {
+        self.parent = parent;
     }
 
 }
@@ -165,27 +193,48 @@ impl<'a> NbtData<'a> {
 
     fn parse(&mut self) -> Result<(), NbtReadError> {
         
-        let cursor = &mut self.nbt_parser.cursor();
+        // #01 Initialize
+        // #01 Initialize NbtTag content
         let mut tag_id;
-        let mut depth_delta= 0;
+        //let mut tag_name;
+        //let mut tag_value;
+        //let mut byte_start;
+        // #01 Initialize auxiliary information for parsing and building the NbtTag tree
+        let cursor = &mut self.nbt_parser.cursor();
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
         let mut nbt_parent_index = 0;
+        let mut depth_delta= 0;
+
+        let mut new_nbt_tag = NbtTag {  name: "".to_string(), 
+                                                value: NbtTagType::End(None), 
+                                                byte_start: 0, 
+                                                byte_end: 0,
+                                                index: 0,
+                                                depth: 0,
+                                                parent: 0,
+                                                children: Vec::new()};  
     
-        let mut byte_start;   
-        let mut tag_name;
-        let mut tag_value;
-    
+        // #02 Parse the Nbt binary file and build the NbtTag tree
         cursor.seek(SeekFrom::Start(0)).unwrap();
-        
         loop {
-            byte_start = cursor.position();   
-            tag_name = String::new();
-            tag_value = NbtTagType::End(None);
-            
+
+            // set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
             self.nbt_parser.set_tree_depth(self.nbt_parser.tree_depth() + depth_delta);
             self.set_new_parent_index(depth_delta, &mut nbt_parent_index)?;
             depth_delta = 0;
-    
+
+            // reset the NbtTag information and start parsing a new NbtTag
+            //byte_start = cursor.position();   
+            
+            new_nbt_tag.set_name("".to_string());
+            new_nbt_tag.set_value(NbtTagType::End(None));
+            new_nbt_tag.set_byte_start(cursor.position());
+            new_nbt_tag.set_byte_end(new_nbt_tag.byte_start());
+            new_nbt_tag.set_index(0);
+            new_nbt_tag.set_depth(0);
+            new_nbt_tag.set_parent(0);
+            
+
             match self.nbt_parser.state() {
                 fsm::ParseNbtFsm::Normal => {
                     //(tag_id, tag_name, tag_value, depth_delta) = parse_tag_id_name_and_value(test_sequence, nbt_parser, &mut unfinished_lists, nbt_parent_index)?;
@@ -203,10 +252,10 @@ impl<'a> NbtData<'a> {
                         depth_delta = self.exit_nbttag_compound(nbt_parent_index);
                     }
                     else {
-                        tag_name = fsm::parse::nbt_tag_string(cursor)?;    
-                        tag_value = fsm::parse::nbt_tag(cursor, &tag_id)?;
+                        new_nbt_tag.set_name(fsm::parse::nbt_tag_string(cursor)?);    
+                        new_nbt_tag.set_value(fsm::parse::nbt_tag(cursor, &tag_id)?);
     
-                        if let NbtTagType::List(ref list_elem_tag_ids) = tag_value {
+                        if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
                             self.nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
                             self.nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
                             self.nbt_parser.change_state_to(fsm::ParseNbtFsm::List); 
@@ -222,8 +271,8 @@ impl<'a> NbtData<'a> {
     
                 fsm::ParseNbtFsm::List => {
                     tag_id = *self.nbt_parser.list_parser.tag_id();
-                    tag_name = "".to_string();
-                    tag_value = fsm::parse::nbt_tag(cursor, &tag_id)?;
+                    new_nbt_tag.set_name("".to_string());
+                    new_nbt_tag.set_value(fsm::parse::nbt_tag(cursor, &tag_id)?);
                     
                     if self.nbt_parser.list_parser.is_end() {   
                         self.nbt_parser.change_state_to(fsm::ParseNbtFsm::Normal); 
@@ -258,21 +307,15 @@ impl<'a> NbtData<'a> {
                 },
             }
     
-            let byte_end = cursor.position();
-            
-            let new_nbt_tag = NbtTag { name: tag_name, 
-                                                    value: tag_value, 
-                                                    byte_start: byte_start, 
-                                                    byte_end: byte_end,
-                                                    index: *self.nbt_parser.index(),
-                                                    depth: *self.nbt_parser.tree_depth(),
-                                                    parent: nbt_parent_index,
-                                                    children: Vec::new()};  
-            
-            self.tags.push(new_nbt_tag);
+            new_nbt_tag.set_byte_end(cursor.position());
+            new_nbt_tag.set_index(*self.nbt_parser.index());
+            new_nbt_tag.set_depth(*self.nbt_parser.tree_depth());
+            new_nbt_tag.set_parent(nbt_parent_index);
+
+            self.tags.push(new_nbt_tag.clone());
     
             self.nbt_parser.increment_index();
-            if byte_end >= total_bytes {
+            if new_nbt_tag.byte_end() >= total_bytes {
                 self.nbt_parser.change_state_to(fsm::ParseNbtFsm::EndOfFile);
                 break; //TODO Remove
             }
