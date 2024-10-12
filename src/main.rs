@@ -14,8 +14,10 @@ fn main() {
     let test_tag_sequence = nbt::NbtData::from_buf(&mut cursor).unwrap();
     
     let test_tag = test_tag_sequence.nbt_tags();
-
+    
     test_tag.iter().for_each(|x| println!("{:?}", x));
+    //test_tag.iter().for_each(|x| format_tag(x));
+    format_output(&test_tag, cursor.clone());
 }
 
 fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
@@ -29,4 +31,18 @@ fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
 
     decoder.read_to_end(&mut decompressed_data)?;
     Ok(decompressed_data)
+}
+
+fn format_output(nbt_tags: &Vec<nbt::NbtTag>, cursor: Cursor<Vec<u8>>) {
+    
+    nbt_tags.iter().for_each(|x| format_tag(x));
+
+}
+
+fn format_tag(tag: &nbt::NbtTag) {
+    for i in 0..tag.depth() {
+        print!("-");
+    }
+    print!(">");
+    println!("{}", tag.name());
 }

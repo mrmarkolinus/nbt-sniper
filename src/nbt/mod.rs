@@ -99,6 +99,7 @@ pub struct NbtTag {
     value: NbtTagType,
     byte_start: u64,
     byte_end: u64,
+    byte_end_with_children: u64,
     index: usize,
     depth: i64,
     parent: usize,
@@ -136,6 +137,14 @@ impl NbtTag {
 
     pub fn set_byte_end(&mut self, byte_end: u64) {
         self.byte_end = byte_end;
+    }
+
+    pub fn byte_end_with_children(&self) -> u64 {
+        self.byte_end_with_children
+    }
+
+    pub fn set_byte_end_with_children(&mut self, byte_end_with_children: u64) {
+        self.byte_end_with_children = byte_end_with_children;
     }
 
     pub fn index(&self) -> usize {
@@ -196,23 +205,22 @@ impl<'a> NbtData<'a> {
         // #01 Initialize
         // #01 Initialize NbtTag content
         let mut tag_id;
-        //let mut tag_name;
-        //let mut tag_value;
-        //let mut byte_start;
+        let mut new_nbt_tag = NbtTag {  name: "".to_string(), 
+                                                value: NbtTagType::End(None), 
+                                                byte_start: 0, 
+                                                byte_end: 0,
+                                                byte_end_with_children: 0,
+                                                index: 0,
+                                                depth: 0,
+                                                parent: 0,
+                                                children: Vec::new()};  
+
         // #01 Initialize auxiliary information for parsing and building the NbtTag tree
         let cursor = &mut self.nbt_parser.cursor();
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
         let mut nbt_parent_index = 0;
         let mut depth_delta= 0;
 
-        let mut new_nbt_tag = NbtTag {  name: "".to_string(), 
-                                                value: NbtTagType::End(None), 
-                                                byte_start: 0, 
-                                                byte_end: 0,
-                                                index: 0,
-                                                depth: 0,
-                                                parent: 0,
-                                                children: Vec::new()};  
     
         // #02 Parse the Nbt binary file and build the NbtTag tree
         cursor.seek(SeekFrom::Start(0)).unwrap();
@@ -224,8 +232,6 @@ impl<'a> NbtData<'a> {
             depth_delta = 0;
 
             // reset the NbtTag information and start parsing a new NbtTag
-            //byte_start = cursor.position();   
-            
             new_nbt_tag.set_name("".to_string());
             new_nbt_tag.set_value(NbtTagType::End(None));
             new_nbt_tag.set_byte_start(cursor.position());
@@ -313,7 +319,8 @@ impl<'a> NbtData<'a> {
             new_nbt_tag.set_parent(nbt_parent_index);
 
             self.tags.push(new_nbt_tag.clone());
-    
+            self.add_child_to_parent(&new_nbt_tag, nbt_parent_index);
+
             self.nbt_parser.increment_index();
             if new_nbt_tag.byte_end() >= total_bytes {
                 self.nbt_parser.change_state_to(fsm::ParseNbtFsm::EndOfFile);
@@ -322,6 +329,11 @@ impl<'a> NbtData<'a> {
         }
     
         Ok(())
+    }
+
+    fn add_child_to_parent(&mut self, new_nbt_tag: &NbtTag, nbt_parent_index: usize) {
+        self.tags[nbt_parent_index].children.push(new_nbt_tag.index());
+        self.tags[nbt_parent_index].set_byte_end_with_children(new_nbt_tag.byte_end());
     }
 
     fn set_new_parent_index(&self, depth_delta: i64, nbt_parent_index: &mut usize) -> Result<(), NbtReadError> {
