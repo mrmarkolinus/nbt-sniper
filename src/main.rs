@@ -16,7 +16,7 @@ fn main() {
     
     test_tag.iter().for_each(|x| println!("{:?}", x));
     //test_tag.iter().for_each(|x| format_tag(x));
-    format_output_raw(&nbtdata);
+    format_output(&nbtdata);
 }
 
 fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
@@ -34,14 +34,21 @@ fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
 
 fn format_output(nbtdata: &nbt::NbtData) {
     
-    for tag in nbtdata.nbt_tags() {
-        format_tag(tag);
+    for nbttag in nbtdata.nbt_tags() {
+        for i in 0..nbttag.depth() {
+            print!("--");
+        }
+        print!(">");
+        display_tag(nbttag.value(), nbttag.name());
+        println!();
     }
 
 }
 
 fn format_output_raw(nbtdata: &nbt::NbtData) {
     
+    let nbt_tags = nbtdata.nbt_tags();
+    let mut nbt_index = 0;
     for (i, byte) in nbtdata.raw_bytes().iter().enumerate() {
         // Print a space every 4 bytes for grouping
         if i % 4 == 0 && i % 16 != 0 {
@@ -49,6 +56,9 @@ fn format_output_raw(nbtdata: &nbt::NbtData) {
         }
         // Print a new line every 16 bytes
         if i % 16 == 0 && i != 0 {
+            print!(" | ");
+            //print!("{}", nbt_tags[nbt_index].name());
+            
             println!();
         }
         // Print the byte as hex
@@ -65,4 +75,23 @@ fn format_tag(tag: &nbt::NbtTag) {
     }
     print!(">");
     println!("{}", tag.name());
+}
+
+fn display_tag(nbttag_value: &nbt::NbtTagType, tag_name: &str) {
+
+    match nbttag_value {
+        nbt::NbtTagType::End(_) => print!("End - {}", tag_name),
+        nbt::NbtTagType::Byte(x) => print!("Byte - {}: {}", tag_name, x),
+        nbt::NbtTagType::Short(x) => print!("Short - {}: {}", tag_name, x),
+        nbt::NbtTagType::Int(x) => print!("Int - {}: {}", tag_name, x),
+        nbt::NbtTagType::Long(x) => print!("Long - {}: {}", tag_name, x),
+        nbt::NbtTagType::Float(x) => print!("Float - {}: {}", tag_name, x),
+        nbt::NbtTagType::Double(x) => print!("Double - {}: {}", tag_name, x),
+        nbt::NbtTagType::ByteArray(x) => print!("ByteArray - {}: {:?}", tag_name, x),
+        nbt::NbtTagType::String(x) => print!("String - {}: {:?}", tag_name, x),
+        nbt::NbtTagType::List(x) => print!("List - {}: {:?}", tag_name, x),
+        nbt::NbtTagType::Compound(x) => print!("Compound - {}: {:?}", tag_name, x),
+        nbt::NbtTagType::IntArray(x) => print!("IntArray - {}: {:?}", tag_name, x),
+        nbt::NbtTagType::LongArray(x) => print!("LongArray - {}: {:?}", tag_name, x),
+    }
 }
