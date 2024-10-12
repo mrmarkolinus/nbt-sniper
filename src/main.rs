@@ -14,7 +14,7 @@ fn main() {
     let nbtdata = nbt::NbtData::from_buf(buffer).unwrap();
     let test_tag = nbtdata.nbt_tags();
     
-    test_tag.iter().for_each(|x| println!("{:?}", x));
+    //test_tag.iter().for_each(|x| println!("{:?}", x));
     //test_tag.iter().for_each(|x| format_tag(x));
     format_output(&nbtdata);
 }
