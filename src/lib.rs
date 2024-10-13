@@ -8,6 +8,75 @@ use std::fs::File;
 
 pub mod nbt;
 
+pub struct MinecraftBinary {
+    file_path: String,
+    nbtdata: nbt::NbtData
+}
+
+impl MinecraftBinary {
+    pub fn new(file_path: String) -> Self {
+        let buffer = Self::read_file(&file_path).unwrap();
+        let nbtdata = nbt::NbtData::from_buf(buffer).unwrap();
+        MinecraftBinary { file_path, nbtdata}  
+    }
+
+    pub fn file_path(&self) -> &str {
+        &self.file_path
+    }
+
+    pub fn nbtdata(&self) -> &nbt::NbtData {
+        &self.nbtdata
+    }
+
+    fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
+        
+        // Open the file and create a buffered reader for efficient reading
+        let file = fs::File::open(file_path)?;
+        
+        let buf_reader = BufReader::new(file);
+        let mut decoder = GzDecoder::new(buf_reader);
+        let mut decompressed_data = Vec::new();
+    
+        decoder.read_to_end(&mut decompressed_data)?;
+        Ok(decompressed_data)
+    }
+
+    pub fn format_output(&self) {
+    
+        for nbttag in self.nbtdata.nbt_tags() {
+            if nbttag.depth() > 0 {
+                print!("|");  
+            }
+            for i in 0..nbttag.depth() {
+                print!("___");
+            }
+            Self::display_tag(nbttag.value(), nbttag.name());
+            println!();
+        }
+    
+    }
+
+    fn display_tag(nbttag_value: &nbt::NbtTagType, tag_name: &str) {
+
+        match nbttag_value {
+            nbt::NbtTagType::End(_) => print!("End - {}", tag_name),
+            nbt::NbtTagType::Byte(x) => print!("Byte - {}: {}", tag_name, x),
+            nbt::NbtTagType::Short(x) => print!("Short - {}: {}", tag_name, x),
+            nbt::NbtTagType::Int(x) => print!("Int - {}: {}", tag_name, x),
+            nbt::NbtTagType::Long(x) => print!("Long - {}: {}", tag_name, x),
+            nbt::NbtTagType::Float(x) => print!("Float - {}: {}", tag_name, x),
+            nbt::NbtTagType::Double(x) => print!("Double - {}: {}", tag_name, x),
+            nbt::NbtTagType::ByteArray(x) => print!("ByteArray - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::String(x) => print!("String - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::List(x) => print!("List - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::Compound(x) => print!("Compound - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::IntArray(x) => print!("IntArray - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::LongArray(x) => print!("LongArray - {}: {:?}", tag_name, x),
+        }
+    }
+    
+}
+/* 
 fn main() {
     let buffer = read_file("files/bigtest.nbt").unwrap();
 
@@ -113,3 +182,4 @@ fn display_tag(nbttag_value: &nbt::NbtTagType, tag_name: &str) {
         nbt::NbtTagType::LongArray(x) => print!("LongArray - {}: {:?}", tag_name, x),
     }
 }
+ */
