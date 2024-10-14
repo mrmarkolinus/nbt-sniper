@@ -71,12 +71,12 @@ impl MinecraftBinary {
             nbt::NbtTagType::Long(x) => print!("{}[Long]: {}", tag_name, x),
             nbt::NbtTagType::Float(x) => print!("{}[Float]: {}", tag_name, x),
             nbt::NbtTagType::Double(x) => print!("{}[Double]: {}", tag_name, x),
-            nbt::NbtTagType::ByteArray(x) => print!("{}[ByteArray]: {:?}", tag_name, x),
+            nbt::NbtTagType::ByteArray(x) => print!("{}[ByteArray]: [Values... see dump]", tag_name),
             nbt::NbtTagType::String(x) => print!("{}[String]: {:?}", tag_name, x),
             nbt::NbtTagType::List(x) => print!("{}[List]: {:?}", tag_name, x),
             nbt::NbtTagType::Compound(x) => print!("{}[Compound]: ", tag_name),
-            nbt::NbtTagType::IntArray(x) => print!("{}[IntArray]: {:?}", tag_name, x),
-            nbt::NbtTagType::LongArray(x) => print!("{}[LongArray]: {:?}", tag_name, x),
+            nbt::NbtTagType::IntArray(x) => print!("{}[IntArray]: [Values... see dump]", tag_name),
+            nbt::NbtTagType::LongArray(x) => print!("{}[LongArray]: [Values... see dump]", tag_name),
         }
         println!("");
 
