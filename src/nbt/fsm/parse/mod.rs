@@ -167,3 +167,429 @@ pub fn nbt_tag(cursor: &mut Cursor<Vec<u8>>, tag_id: &nbt::NbtTagId) -> Result<n
 
     Ok(tag_value)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+        /// Helper function to create a Cursor from a vector of bytes.
+        fn make_cursor(data: Vec<u8>) -> Cursor<Vec<u8>> {
+            Cursor::new(data)
+        }
+
+    // Tests for `nbt_tag_id`
+    #[test]
+    fn test_nbt_tag_id_valid_ids() {
+        for (id_u8, expected_id) in &[
+            (0u8, nbt::NbtTagId::End),
+            (1u8, nbt::NbtTagId::Byte),
+            (2u8, nbt::NbtTagId::Short),
+            (3u8, nbt::NbtTagId::Int),
+            (4u8, nbt::NbtTagId::Long),
+            (5u8, nbt::NbtTagId::Float),
+            (6u8, nbt::NbtTagId::Double),
+            (7u8, nbt::NbtTagId::ByteArray),
+            (8u8, nbt::NbtTagId::String),
+            (9u8, nbt::NbtTagId::List),
+            (10u8, nbt::NbtTagId::Compound),
+            (11u8, nbt::NbtTagId::IntArray),
+            (12u8, nbt::NbtTagId::LongArray),
+        ] {
+            let cursor = make_cursor(vec![*id_u8]);
+            let mut cursor = cursor;
+            let result = nbt_tag_id(&mut cursor).unwrap();
+            assert_eq!(result, Some(*expected_id));
+        }
+    }
+
+    #[test]
+    fn test_nbt_tag_id_invalid_id() {
+        let invalid_id = 13u8; // Assuming 0-12 are valid
+        let cursor = make_cursor(vec![invalid_id]);
+        let mut cursor = cursor;
+        let result = nbt_tag_id(&mut cursor).unwrap();
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_nbt_tag_id_io_error() {
+        let cursor = make_cursor(vec![]); // Empty cursor, cannot read u8
+        let mut cursor = cursor;
+        let result = nbt_tag_id(&mut cursor);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    // Tests for `nbt_tag_string`
+    #[test]
+    fn test_nbt_tag_string_valid() {
+        // String "Test"
+        let mut data = Vec::new();
+        data.extend(&2u16.to_be_bytes()); // name_len = 2
+        data.push(b'T');
+        data.push(b'e');
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag_string(&mut cursor).unwrap();
+        assert_eq!(result, "Te");
+    }
+
+    #[test]
+    fn test_nbt_tag_string_empty() {
+        let mut data = Vec::new();
+        data.extend(&0i16.to_be_bytes()); // name_len = 0
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag_string(&mut cursor).unwrap();
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_nbt_tag_string_negative_length() {
+        let mut data = Vec::new();
+        data.extend(&(-1i16).to_be_bytes()); // name_len = -1
+        // Since the loop is 0..-1, which is invalid, it will not execute
+        // The string will have capacity of usize::MAX, but we are not using it
+        // However, converting -1i16 to usize can cause unexpected behavior
+        // To prevent this, let's see how the code handles it
+        // In Rust, 0..-1i16 will not compile, so likely it's cast to usize
+        // Here, assuming it's cast as 0..(name_len as usize)
+        // name_len as usize for -1i16 is 65535
+        // To avoid creating a large string, let's limit the test
+        // Instead, we can check if the function handles it gracefully
+        // But as per the original code, it doesn't handle negative lengths
+        // So it will try to read 65535 bytes, which is not present, leading to an error
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag_string(&mut cursor);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_string_insufficient_bytes() {
+        let mut data = Vec::new();
+        data.extend(&4i16.to_be_bytes()); // name_len = 4
+        data.extend(&vec![b'T', b'e']); // Only 2 bytes instead of 4
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag_string(&mut cursor);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    // Tests for `nbt_tag`
+    #[test]
+    fn test_nbt_tag_end() {
+        let cursor = make_cursor(vec![]); // No data needed for End
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::End).unwrap();
+        assert_eq!(result, nbt::NbtTagType::End(None));
+    }
+
+    #[test]
+    fn test_nbt_tag_byte() {
+        let cursor = make_cursor(vec![0x7F]); // i8::MAX
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Byte).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Byte(127));
+    }
+
+    #[test]
+    fn test_nbt_tag_byte_io_error() {
+        let cursor = make_cursor(vec![]); // No data
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Byte);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_short() {
+        let cursor = make_cursor(2u16.to_be_bytes().to_vec()); // i16::from_be_bytes([0x00, 0x2A]) = 42
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Short).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Short(42));
+    }
+
+    #[test]
+    fn test_nbt_tag_short_io_error() {
+        let cursor = make_cursor(vec![0x00]); // Incomplete i16
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Short);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    /* #[test]
+    fn test_nbt_tag_int() {
+        let cursor = make_cursor(4i32::to_be_bytes().to_vec()); // 42
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Int).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Int(42));
+    } */
+
+    #[test]
+    fn test_nbt_tag_int_io_error() {
+        let cursor = make_cursor(vec![0x00, 0x00, 0x00]); // Incomplete i32
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Int);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+   /*  #[test]
+    fn test_nbt_tag_long() {
+        let cursor = make_cursor(8i64::to_be_bytes().to_vec()); // 42
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Long).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Long(42));
+    } */
+
+    #[test]
+    fn test_nbt_tag_long_io_error() {
+        let cursor = make_cursor(vec![0x00; 7]); // Incomplete i64
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Long);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_float() {
+        let cursor = make_cursor(42f32.to_be_bytes().to_vec());
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Float).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Float(42f32));
+    }
+
+    #[test]
+    fn test_nbt_tag_float_io_error() {
+        let cursor = make_cursor(vec![0x00, 0x00, 0x00]); // Incomplete f32
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Float);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_double() {
+        let cursor = make_cursor(42f64.to_be_bytes().to_vec());
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Double).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Double(42f64));
+    }
+
+    #[test]
+    fn test_nbt_tag_double_io_error() {
+        let cursor = make_cursor(vec![0x00; 7]); // Incomplete f64
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Double);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_byte_array() {
+        let len = 3i32.to_be_bytes();
+        let data = vec![1i8, 2i8, 3i8];
+        let mut combined = Vec::new();
+        combined.extend(&len);
+        combined.extend(&data.iter().map(|x| *x as u8).collect::<Vec<u8>>());
+        let cursor = make_cursor(combined);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::ByteArray).unwrap();
+        assert_eq!(result, nbt::NbtTagType::ByteArray(vec![1, 2, 3]));
+    }
+
+    #[test]
+    fn test_nbt_tag_byte_array_io_error_length() {
+        let cursor = make_cursor(vec![0x00, 0x00]); // Incomplete i32 for length
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::ByteArray);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_byte_array_io_error_data() {
+        let len = 5i32.to_be_bytes();
+        let data = vec![1i8, 2i8]; // Only 2 bytes instead of 5
+        let mut combined = Vec::new();
+        combined.extend(&len);
+        combined.extend(&data.iter().map(|x| *x as u8).collect::<Vec<u8>>());
+        let cursor = make_cursor(combined);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::ByteArray);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_string() {
+        // name_len = 4, string "Test"
+        let mut data = Vec::new();
+        data.extend(&4i16.to_be_bytes());
+        data.extend(&b"Test".to_vec());
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::String).unwrap();
+        assert_eq!(result, nbt::NbtTagType::String("Test".to_string()));
+    }
+
+    #[test]
+    fn test_nbt_tag_string_error() {
+        // name_len = 4, but only 3 bytes provided
+        let mut data = Vec::new();
+        data.extend(&4i16.to_be_bytes());
+        data.extend(&b"Tes".to_vec());
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::String);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_list_valid() {
+        // List tag: tag_id = 1 (Byte), length = 2
+        let mut data = Vec::new();
+        data.push(1u8); // List element tag_id = Byte
+        data.extend(&2i32.to_be_bytes()); // length = 2
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::List).unwrap();
+        assert_eq!(result, nbt::NbtTagType::List((nbt::NbtTagId::Byte, 2)));
+    }
+
+    #[test]
+    fn test_nbt_tag_list_invalid_tag_id() {
+        // List tag: invalid element tag_id
+        let mut data = Vec::new();
+        data.push(13u8); // Invalid tag_id
+        data.extend(&2i32.to_be_bytes()); // length = 2
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::List);
+        assert_eq!(result, Err(nbt::NbtReadError::InvalidContent));
+    }
+
+    #[test]
+    fn test_nbt_tag_list_io_error_tag_id() {
+        // List tag: missing tag_id
+        let mut data = Vec::new();
+        // No tag_id
+        data.extend(&2i32.to_be_bytes()); // length = 2
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::List);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    #[should_panic(expected = "List length is too large")]
+    fn test_nbt_tag_list_panic_large_length() {
+        // List tag with length > 65536
+        let mut data = Vec::new();
+        data.push(1u8); // List element tag_id = Byte
+        data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        nbt_tag(&mut cursor, &nbt::NbtTagId::List).unwrap();
+    }
+
+    #[test]
+    fn test_nbt_tag_compound() {
+        let cursor = make_cursor(vec![]); // No data needed
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Compound).unwrap();
+        assert_eq!(result, nbt::NbtTagType::Compound("".to_string()));
+    }
+
+    #[test]
+    fn test_nbt_tag_int_array() {
+        // IntArray with length = 3 and values [1, 2, 3]
+        let mut data = Vec::new();
+        data.extend(&3i32.to_be_bytes()); // length = 3
+        data.extend(&1i32.to_be_bytes());
+        data.extend(&2i32.to_be_bytes());
+        data.extend(&3i32.to_be_bytes());
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::IntArray).unwrap();
+        assert_eq!(result, nbt::btTagType::IntArray(vec![1, 2, 3]));
+    }
+
+    #[test]
+    fn test_nbt_tag_int_array_panic_large_length() {
+        let mut data = Vec::new();
+        data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        // Expect panic due to large length
+        // Note: Since the function will panic before reading data, no data bytes are needed
+        // However, to trigger the panic, we need to call the function
+        // Use the `should_panic` attribute
+        // But Rust's #[should_panic] cannot be used here, so we need to use std::panic::catch_unwind
+        let result = std::panic::catch_unwind(|| {
+            nbt_tag(&mut cursor, &nbt::NbtTagId::IntArray).unwrap();
+        });
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_nbt_tag_int_array_io_error_length() {
+        let cursor = make_cursor(vec![0x00, 0x00, 0x00]); // Incomplete i32 for length
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::IntArray);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_int_array_io_error_data() {
+        // IntArray with length = 3 but only 2 integers provided
+        let mut data = Vec::new();
+        data.extend(&3i32.to_be_bytes()); // length = 3
+        data.extend(&1i32.to_be_bytes());
+        data.extend(&2i32.to_be_bytes());
+        // Missing the third integer
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::IntArray);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_long_array() {
+        // LongArray with length = 2 and values [1, 2]
+        let mut data = Vec::new();
+        data.extend(&2i32.to_be_bytes()); // length = 2
+        data.extend(&1i64.to_be_bytes());
+        data.extend(&2i64.to_be_bytes());
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::LongArray).unwrap();
+        assert_eq!(result, nbt::NbtTagType::LongArray(vec![1, 2]));
+    }
+
+    #[test]
+    fn test_nbt_tag_long_array_panic_large_length() {
+        let mut data = Vec::new();
+        data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = std::panic::catch_unwind(|| {
+            nbt_tag(&mut cursor, &nbt::NbtTagId::LongArray).unwrap();
+        });
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_nbt_tag_long_array_io_error_length() {
+        let cursor = make_cursor(vec![0x00, 0x00, 0x00]); // Incomplete i32 for length
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::LongArray);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+
+    #[test]
+    fn test_nbt_tag_long_array_io_error_data() {
+        // LongArray with length = 2 but only 1 long provided
+        let mut data = Vec::new();
+        data.extend(&2i32.to_be_bytes()); // length = 2
+        data.extend(&1i64.to_be_bytes());
+        // Missing the second long
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::LongArray);
+        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+    }
+}

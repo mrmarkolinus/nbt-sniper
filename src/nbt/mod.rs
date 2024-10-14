@@ -18,7 +18,7 @@ pub enum NbtReadError {
     InvalidNbtDepth,  // Custom error for tag id validation
 }
 
-#[derive(Debug, Copy, Clone, Serialize)]
+#[derive(Debug, Copy, Clone, Serialize, PartialEq)]
 pub enum NbtTagId {
     End = 0,
     Byte = 1,
@@ -75,7 +75,7 @@ impl NbtTagId {
 }
 
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum NbtTagType {
     End(Option<u8>),
     Byte(i8),
@@ -92,7 +92,7 @@ pub enum NbtTagType {
     LongArray(Vec<i64>),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 struct NbtTagPositionRawBytes {
     byte_start_all: usize,
     byte_end_all: usize,
@@ -207,7 +207,7 @@ impl NbtTagPositionRawBytes {
 }
 
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct NbtTagPosition {
     raw_bytes: NbtTagPositionRawBytes,
     index: usize,
@@ -338,7 +338,7 @@ impl NbtTagPosition {
 
 }
 
-#[derive(Debug, Clone, Serialize)] 
+#[derive(Debug, Clone, Serialize, PartialEq)] 
 pub struct NbtTag {
     name: String,
     value: NbtTagType,
