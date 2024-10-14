@@ -2,6 +2,7 @@ use flate2::read::GzDecoder;
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
+use std::vec;
 use serde_json;
 use std::fs::File;
 
@@ -50,41 +51,94 @@ impl MinecraftBinary {
             for i in 0..nbttag.position().depth() {
                 print!("___");
             }
-            Self::display_tag(nbttag);
+            Self::display_tag(nbttag, &self.nbtdata.raw_bytes());
+
             println!();
         }
     
     }
 
-    fn display_tag(nbttag: &nbt::NbtTag) {
+
+    fn display_tag(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
 
         let nbttag_value = nbttag.value();
         let tag_name = nbttag.name();
 
         match nbttag_value {
             nbt::NbtTagType::End(_) => print!("End - {}", tag_name),
-            nbt::NbtTagType::Byte(x) => print!("Byte - {}: {}", tag_name, x),
-            nbt::NbtTagType::Short(x) => print!("Short - {}: {}", tag_name, x),
-            nbt::NbtTagType::Int(x) => print!("Int - {}: {}", tag_name, x),
-            nbt::NbtTagType::Long(x) => print!("Long - {}: {}", tag_name, x),
-            nbt::NbtTagType::Float(x) => print!("Float - {}: {}", tag_name, x),
-            nbt::NbtTagType::Double(x) => print!("Double - {}: {}", tag_name, x),
-            nbt::NbtTagType::ByteArray(x) => print!("ByteArray - {}: {:?}", tag_name, x),
-            nbt::NbtTagType::String(x) => print!("String - {}: {:?}", tag_name, x),
-            nbt::NbtTagType::List(x) => print!("List - {}: {:?}", tag_name, x),
-            nbt::NbtTagType::Compound(x) => print!("Compound - {}: {:?} - ", tag_name, x),
-            nbt::NbtTagType::IntArray(x) => print!("IntArray - {}: {:?}", tag_name, x),
-            nbt::NbtTagType::LongArray(x) => print!("LongArray - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::Byte(x) => print!("{}[Byte]: {}", tag_name, x),
+            nbt::NbtTagType::Short(x) => print!("{}[Short]: {}", tag_name, x),
+            nbt::NbtTagType::Int(x) => print!("{}[Int]: {}", tag_name, x),
+            nbt::NbtTagType::Long(x) => print!("{}[Long]: {}", tag_name, x),
+            nbt::NbtTagType::Float(x) => print!("{}[Float]: {}", tag_name, x),
+            nbt::NbtTagType::Double(x) => print!("{}[Double]: {}", tag_name, x),
+            nbt::NbtTagType::ByteArray(x) => print!("{}[ByteArray]: {:?}", tag_name, x),
+            nbt::NbtTagType::String(x) => print!("{}[String]: {:?}", tag_name, x),
+            nbt::NbtTagType::List(x) => print!("{}[List]: {:?}", tag_name, x),
+            nbt::NbtTagType::Compound(x) => print!("{}[Compound]: ", tag_name),
+            nbt::NbtTagType::IntArray(x) => print!("{}[IntArray]: {:?}", tag_name, x),
+            nbt::NbtTagType::LongArray(x) => print!("{}[LongArray]: {:?}", tag_name, x),
         }
 
-        Self::display_raw_values(&nbttag.position());
+        Self::display_raw_values(nbttag_value, &nbttag.position(), rawbytes);
     }
 
-    fn display_raw_values(position : &nbt::NbtTagPosition) {
+    fn display_raw_values(nbttag_value : &nbt::NbtTagType, position : &nbt::NbtTagPosition, rawbytes: &Vec<u8>) {
         print!("Raw Bytes: ");
         print!("ID[{}:{}] ", position.byte_start_id(), position.byte_end_id());
         print!("Name[{}:{}] ", position.byte_start_name(), position.byte_end_name());
-        print!("Value[{}:{}] ", position.byte_start_value(), position.byte_end_value());
+
+        let byte_start;
+        let byte_end;
+        let byte_start_dump;
+        let byte_end_dump;
+
+        match nbttag_value {
+            nbt::NbtTagType::Compound(x) => { 
+                byte_start = position.byte_start_value(); 
+                byte_end = position.byte_end_all_with_children();
+                byte_start_dump = position.byte_start_all();
+                byte_end_dump = position.byte_end_all();
+            },
+            nbt::NbtTagType::List(x) => { 
+                byte_start = position.byte_start_value(); 
+                byte_end = position.byte_end_all_with_children(); 
+                byte_start_dump = position.byte_start_all();
+                byte_end_dump = position.byte_end_all();
+            },
+            nbt::NbtTagType::End(x) => { 
+                byte_start = position.byte_start_value(); 
+                byte_end = position.byte_end_value(); 
+                byte_start_dump = position.byte_start_all();
+                byte_end_dump = position.byte_end_all();
+            },
+            _ => { 
+                byte_start = position.byte_start_value(); 
+                byte_end = position.byte_end_value();
+                byte_start_dump = position.byte_start_all();
+                byte_end_dump = position.byte_end_all();
+            }
+        }  
+
+        let dump_hex= &rawbytes[byte_start_dump..byte_end_dump];
+
+        print!("Value[{}:{}] ", byte_start, byte_end);
+        println!();
+        print!("Dump Hex: {:x?}", dump_hex);
+    }
+
+    fn output_json(nbtdata: &nbt::NbtData, output_path: &str) {
+        // Convert the Vec to a JSON string
+        //let json_output = serde_json::to_string_pretty(&nbtdata.nbt_tags()).unwrap();
+    
+        // Print the JSON
+        //println!("{}", json_output);
+    
+        // Open (or create) a file to write to
+        let file = File::create(output_path).expect("Impossible to create file");
+    
+        // Write the JSON to the file
+        serde_json::to_writer_pretty(file, &nbtdata.nbt_tags()).unwrap();
     }
     
 }

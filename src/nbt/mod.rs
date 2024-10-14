@@ -94,15 +94,15 @@ pub enum NbtTagType {
 
 #[derive(Debug, Clone, Serialize)]
 struct NbtTagPositionRawBytes {
-    byte_start_all: u64,
-    byte_end_all: u64,
-    byte_end_all_with_children: u64,
-    byte_start_id: u64,
-    byte_end_id: u64,
-    byte_start_name: u64,
-    byte_end_name: u64,
-    byte_start_value: u64,
-    byte_end_value: u64,
+    byte_start_all: usize,
+    byte_end_all: usize,
+    byte_end_all_with_children: usize,
+    byte_start_id: usize,
+    byte_end_id: usize,
+    byte_start_name: usize,
+    byte_end_name: usize,
+    byte_start_value: usize,
+    byte_end_value: usize,
 }
 
 impl NbtTagPositionRawBytes {
@@ -132,75 +132,75 @@ impl NbtTagPositionRawBytes {
         self.byte_end_value = 0;
     }
 
-    pub fn byte_start_all(&self) -> u64 {
+    pub fn byte_start_all(&self) -> usize {
         self.byte_start_all
     }
 
-    pub fn byte_end_all(&self) -> u64 {
+    pub fn byte_end_all(&self) -> usize {
         self.byte_end_all
     }
 
-    pub fn byte_end_all_with_children(&self) -> u64 {
+    pub fn byte_end_all_with_children(&self) -> usize {
         self.byte_end_all_with_children
     }   
 
-    pub fn byte_start_id(&self) -> u64 {
+    pub fn byte_start_id(&self) -> usize {
         self.byte_start_id
     }
 
-    pub fn byte_end_id(&self) -> u64 {
+    pub fn byte_end_id(&self) -> usize {
         self.byte_end_id
     }
 
-    pub fn byte_start_name(&self) -> u64 {
+    pub fn byte_start_name(&self) -> usize {
         self.byte_start_name
     }
 
-    pub fn byte_end_name(&self) -> u64 {
+    pub fn byte_end_name(&self) -> usize {
         self.byte_end_name
     }
 
-    pub fn byte_start_value(&self) -> u64 {
+    pub fn byte_start_value(&self) -> usize {
         self.byte_start_value
     }
 
-    pub fn byte_end_value(&self) -> u64 {
+    pub fn byte_end_value(&self) -> usize {
         self.byte_end_value
     }
 
-    pub fn set_byte_start_all(&mut self, byte_start_all: u64) {
+    pub fn set_byte_start_all(&mut self, byte_start_all: usize) {
         self.byte_start_all = byte_start_all;
     }
 
-    pub fn set_byte_end_all(&mut self, byte_end_all: u64) {
+    pub fn set_byte_end_all(&mut self, byte_end_all: usize) {
         self.byte_end_all = byte_end_all;
     }
 
-    pub fn set_byte_end_all_with_children(&mut self, byte_end_all_with_children: u64) {
+    pub fn set_byte_end_all_with_children(&mut self, byte_end_all_with_children: usize) {
         self.byte_end_all_with_children = byte_end_all_with_children;
     }
 
-    pub fn set_byte_start_id(&mut self, byte_start_id: u64) {
+    pub fn set_byte_start_id(&mut self, byte_start_id: usize) {
         self.byte_start_id = byte_start_id;
     }
 
-    pub fn set_byte_end_id(&mut self, byte_end_id: u64) {
+    pub fn set_byte_end_id(&mut self, byte_end_id: usize) {
         self.byte_end_id = byte_end_id;
     }
 
-    pub fn set_byte_start_name(&mut self, byte_start_name: u64) {
+    pub fn set_byte_start_name(&mut self, byte_start_name: usize) {
         self.byte_start_name = byte_start_name;
     }
 
-    pub fn set_byte_end_name(&mut self, byte_end_name: u64) {
+    pub fn set_byte_end_name(&mut self, byte_end_name: usize) {
         self.byte_end_name = byte_end_name;
     }
 
-    pub fn set_byte_start_value(&mut self, byte_start_value: u64) {
+    pub fn set_byte_start_value(&mut self, byte_start_value: usize) {
         self.byte_start_value = byte_start_value;
     }
 
-    pub fn set_byte_end_value(&mut self, byte_end_value: u64) {
+    pub fn set_byte_end_value(&mut self, byte_end_value: usize) {
         self.byte_end_value = byte_end_value;
     }
 
@@ -236,75 +236,75 @@ impl NbtTagPosition {
     }
     
 
-    pub fn byte_start_all(&self) -> u64 {
+    pub fn byte_start_all(&self) -> usize {
+        self.raw_bytes.byte_start_all()
+    }
+
+    pub fn byte_end_all(&self) -> usize {
         self.raw_bytes.byte_end_all()
     }
 
-    pub fn byte_end_all(&self) -> u64 {
-        self.raw_bytes.byte_end_all()
-    }
-
-    pub fn byte_end_all_with_children(&self) -> u64 {
+    pub fn byte_end_all_with_children(&self) -> usize {
         self.raw_bytes.byte_end_all_with_children()
     }   
 
-    pub fn byte_start_id(&self) -> u64 {
+    pub fn byte_start_id(&self) -> usize {
         self.raw_bytes.byte_start_id()
     }
 
-    pub fn byte_end_id(&self) -> u64 {
+    pub fn byte_end_id(&self) -> usize {
         self.raw_bytes.byte_end_id()
     }
 
-    pub fn byte_start_name(&self) -> u64 {
+    pub fn byte_start_name(&self) -> usize {
         self.raw_bytes.byte_start_name()
     }
 
-    pub fn byte_end_name(&self) -> u64 {
+    pub fn byte_end_name(&self) -> usize {
         self.raw_bytes.byte_end_name()
     }
 
-    pub fn byte_start_value(&self) -> u64 {
+    pub fn byte_start_value(&self) -> usize {
         self.raw_bytes.byte_start_value()
     }
 
-    pub fn byte_end_value(&self) -> u64 {
+    pub fn byte_end_value(&self) -> usize {
         self.raw_bytes.byte_end_value()
     }
 
-    pub fn set_byte_start_all(&mut self, byte_start_all: u64) {
+    pub fn set_byte_start_all(&mut self, byte_start_all: usize) {
         self.raw_bytes.set_byte_start_all(byte_start_all)
     }
 
-    pub fn set_byte_end_all(&mut self, byte_end_all: u64) {
+    pub fn set_byte_end_all(&mut self, byte_end_all: usize) {
         self.raw_bytes.set_byte_end_all(byte_end_all)
     }
 
-    pub fn set_byte_end_all_with_children(&mut self, byte_end_all_with_children: u64) {
+    pub fn set_byte_end_all_with_children(&mut self, byte_end_all_with_children: usize) {
         self.raw_bytes.set_byte_end_all_with_children(byte_end_all_with_children)
     }
 
-    pub fn set_byte_start_id(&mut self, byte_start_id: u64) {
+    pub fn set_byte_start_id(&mut self, byte_start_id: usize) {
         self.raw_bytes.set_byte_start_id(byte_start_id)
     }
 
-    pub fn set_byte_end_id(&mut self, byte_end_id: u64) {
+    pub fn set_byte_end_id(&mut self, byte_end_id: usize) {
         self.raw_bytes.set_byte_end_id(byte_end_id)
     }
 
-    pub fn set_byte_start_name(&mut self, byte_start_name: u64) {
+    pub fn set_byte_start_name(&mut self, byte_start_name: usize) {
         self.raw_bytes.set_byte_start_name(byte_start_name)
     }
 
-    pub fn set_byte_end_name(&mut self, byte_end_name: u64) {
+    pub fn set_byte_end_name(&mut self, byte_end_name: usize) {
         self.raw_bytes.set_byte_end_name(byte_end_name)
     }
 
-    pub fn set_byte_start_value(&mut self, byte_start_value: u64) {
+    pub fn set_byte_start_value(&mut self, byte_start_value: usize) {
         self.raw_bytes.set_byte_start_value(byte_start_value)
     }
 
-    pub fn set_byte_end_value(&mut self, byte_end_value: u64) {
+    pub fn set_byte_end_value(&mut self, byte_end_value: usize) {
         self.raw_bytes.set_byte_end_value(byte_end_value)
     }
     
@@ -378,27 +378,27 @@ impl NbtTag {
         &mut self.position.children
     }
 
-    /* pub fn byte_start(&self) -> u64 {
+    /* pub fn byte_start(&self) -> usize {
         self.position.raw_bytes.byte_start_all
     }
 
-    pub fn set_byte_start(&mut self, byte_start: u64) {
+    pub fn set_byte_start(&mut self, byte_start: usize) {
         self.position.raw_bytes.byte_start_all = byte_start;
     }
 
-    pub fn byte_end(&self) -> u64 {
+    pub fn byte_end(&self) -> usize {
         self.position.raw_bytes.byte_end_all
     }
 
-    pub fn set_byte_end(&mut self, byte_end: u64) {
+    pub fn set_byte_end(&mut self, byte_end: usize) {
         self.position.raw_bytes.byte_end_all = byte_end;
     }
 
-    pub fn byte_end_with_children(&self) -> u64 {
+    pub fn byte_end_with_children(&self) -> usize {
         self.position.raw_bytes.byte_end_all_with_children
     }
 
-    pub fn set_byte_end_with_children(&mut self, byte_end_with_children: u64) {
+    pub fn set_byte_end_with_children(&mut self, byte_end_with_children: usize) {
         self.position.raw_bytes.byte_end_all_with_children = byte_end_with_children;
     }
 
@@ -473,7 +473,7 @@ impl NbtData {
 
         // #01 Initialize auxiliary information for parsing and building the NbtTag tree
         let mut cursor = Cursor::new(self.raw_bytes.clone());
-        let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap();
+        let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap() as usize;
         let mut nbt_parent_index = 0;
         let mut depth_delta= 0;
 
@@ -491,8 +491,16 @@ impl NbtData {
             new_nbt_tag.set_name("".to_string());
             new_nbt_tag.set_value(NbtTagType::End(None));
             
-            new_tag_position.set_byte_start_all(cursor.position());
+            new_tag_position.set_byte_start_all(cursor.position() as usize);
             new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
+           /*  new_tag_position.set_byte_end_all_with_children(new_tag_position.byte_start_all());
+            new_tag_position.set_byte_start_id(new_tag_position.byte_start_all());
+            new_tag_position.set_byte_end_id(new_tag_position.byte_start_all());
+            new_tag_position.set_byte_start_name(new_tag_position.byte_start_all());
+            new_tag_position.set_byte_end_name(new_tag_position.byte_start_all());
+            new_tag_position.set_byte_start_value(new_tag_position.byte_start_all());
+            new_tag_position.set_byte_end_value(new_tag_position.byte_start_all()); */
+
             new_tag_position.set_index(0);
             new_tag_position.set_depth(0);
             new_tag_position.set_parent(0);
@@ -501,7 +509,7 @@ impl NbtData {
             match self.nbt_parser.state() {
                 fsm::ParseNbtFsm::Normal => {
                     //(tag_id, tag_name, tag_value, depth_delta) = parse_tag_id_name_and_value(test_sequence, nbt_parser, &mut unfinished_lists, nbt_parent_index)?;
-                    new_tag_position.set_byte_start_id(cursor.position());
+                    new_tag_position.set_byte_start_id(cursor.position() as usize);
                     tag_id = match fsm::parse::nbt_tag_id(&mut cursor) {
                         Ok(id) => {
                             match id {
@@ -511,19 +519,19 @@ impl NbtData {
                         },
                         Err(e) => return Err(e)
                     };
-                    new_tag_position.set_byte_end_id(cursor.position()); 
+                    new_tag_position.set_byte_end_id(cursor.position() as usize); 
     
                     if let NbtTagId::End = tag_id {
                         depth_delta = self.exit_nbttag_compound(nbt_parent_index);
                     }
                     else {
-                        new_tag_position.set_byte_start_name(cursor.position());
+                        new_tag_position.set_byte_start_name(cursor.position() as usize);
                         new_nbt_tag.set_name(fsm::parse::nbt_tag_string(&mut cursor)?);
-                        new_tag_position.set_byte_end_name(cursor.position()); 
+                        new_tag_position.set_byte_end_name(cursor.position() as usize); 
 
-                        new_tag_position.set_byte_start_value(cursor.position());
+                        new_tag_position.set_byte_start_value(cursor.position() as usize);
                         new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
-                        new_tag_position.set_byte_end_value(cursor.position());
+                        new_tag_position.set_byte_end_value(cursor.position() as usize);
     
                         if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
                             self.nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
@@ -543,9 +551,9 @@ impl NbtData {
                     tag_id = *self.nbt_parser.list_parser.tag_id();
                     new_nbt_tag.set_name("".to_string());
                     
-                    new_tag_position.set_byte_start_value(cursor.position());
+                    new_tag_position.set_byte_start_value(cursor.position() as usize);
                     new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
-                    new_tag_position.set_byte_end_value(cursor.position());
+                    new_tag_position.set_byte_end_value(cursor.position() as usize);
                     
                     if self.nbt_parser.list_parser.is_end() {   
                         self.nbt_parser.change_state_to(fsm::ParseNbtFsm::Normal); 
@@ -580,7 +588,7 @@ impl NbtData {
                 },
             }
     
-            new_tag_position.set_byte_end_all(cursor.position());
+            new_tag_position.set_byte_end_all(cursor.position() as usize);
             new_tag_position.set_index(*self.nbt_parser.index());
             new_tag_position.set_depth(*self.nbt_parser.tree_depth());
             new_tag_position.set_parent(nbt_parent_index);
