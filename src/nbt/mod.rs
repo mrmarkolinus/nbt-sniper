@@ -92,14 +92,50 @@ pub enum NbtTagType {
     LongArray(Vec<i64>),
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct NbtTagPosition_RawBytes {
+    byte_start_all: u64,
+    byte_end_all: u64,
+    byte_end_all_with_children: u64,
+    byte_start_id: u64,
+    byte_end_id: u64,
+    byte_start_name: u64,
+    byte_end_name: u64,
+    byte_start_value: u64,
+    byte_end_value: u64,
+}
 
+impl NbtTagPosition_RawBytes {
+    pub fn new() -> NbtTagPosition_RawBytes {
+        NbtTagPosition_RawBytes {
+            byte_start_all: 0,
+            byte_end_all: 0,
+            byte_end_all_with_children: 0,
+            byte_start_id: 0,
+            byte_end_id: 0,
+            byte_start_name: 0,
+            byte_end_name: 0,
+            byte_start_value: 0,
+            byte_end_value: 0,
+        }
+    }
 
+    pub fn reset(&mut self) {
+        self.byte_start_all = 0;
+        self.byte_end_all = 0;
+        self.byte_end_all_with_children = 0;
+        self.byte_start_id = 0;
+        self.byte_end_id = 0;
+        self.byte_start_name = 0;
+        self.byte_end_name = 0;
+        self.byte_start_value = 0;
+        self.byte_end_value = 0;
+    }
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct NbtTagPosition {
-    byte_start: u64,
-    byte_end: u64,
-    byte_end_with_children: u64,
+    raw_bytes: NbtTagPosition_RawBytes,
     index: usize,
     depth: i64,
     parent: usize,
@@ -109,9 +145,17 @@ pub struct NbtTagPosition {
 impl NbtTagPosition {
     pub fn new() -> NbtTagPosition {
         NbtTagPosition {
-            byte_start: 0,
-            byte_end: 0,
-            byte_end_with_children: 0,
+            raw_bytes: NbtTagPosition_RawBytes {    
+                byte_start_all: 0,
+                byte_end_all: 0,
+                byte_end_all_with_children: 0,
+                byte_start_id: 0,
+                byte_end_id: 0,
+                byte_start_name: 0,
+                byte_end_name: 0,
+                byte_start_value: 0,
+                byte_end_value: 0,
+            },
             index: 0,
             depth: 0,
             parent: 0,
@@ -120,9 +164,7 @@ impl NbtTagPosition {
     }
 
     pub fn reset(&mut self) {
-        self.byte_start = 0;
-        self.byte_end = 0;
-        self.byte_end_with_children = 0;
+        self.raw_bytes.reset();
         self.index = 0;
         self.depth = 0;
         self.parent = 0;
@@ -134,27 +176,27 @@ impl NbtTagPosition {
     }
 
     pub fn byte_start(&self) -> u64 {
-        self.byte_start
+        self.raw_bytes.byte_start_all
     }
 
     pub fn set_byte_start(&mut self, byte_start: u64) {
-        self.byte_start = byte_start;
+        self.raw_bytes.byte_start_all = byte_start;
     }
 
     pub fn byte_end(&self) -> u64 {
-        self.byte_end
+        self.raw_bytes.byte_end_all
     }
 
     pub fn set_byte_end(&mut self, byte_end: u64) {
-        self.byte_end = byte_end;
+        self.raw_bytes.byte_end_all = byte_end;
     }
 
     pub fn byte_end_with_children(&self) -> u64 {
-        self.byte_end_with_children
+        self.raw_bytes.byte_end_all_with_children
     }
 
     pub fn set_byte_end_with_children(&mut self, byte_end_with_children: u64) {
-        self.byte_end_with_children = byte_end_with_children;
+        self.raw_bytes.byte_end_all_with_children = byte_end_with_children;
     }
 
     pub fn index(&self) -> usize {
