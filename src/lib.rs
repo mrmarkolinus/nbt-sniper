@@ -127,6 +127,11 @@ impl MinecraftBinary {
         let dump_hex= &rawbytes[byte_start_dump..byte_end_dump];
 
         println!("Value[{}:{}]", byte_start, byte_end);
+        
+        for i in 0..nbttag.position().depth(){
+            print!("   ");
+        }
+        println!("Hex Dump[{}:{}]", byte_start_dump, byte_end_dump);
         Self::format_output_raw(dump_hex, nbttag.position().depth());
 
     }
@@ -140,11 +145,11 @@ impl MinecraftBinary {
         for i in 0..rawbytes.len() {
             let byte = rawbytes[i];
             // Print a space every 4 bytes for grouping
-            if i % 4 == 0 && i % 16 != 0 {
+            if i % 4 == 0 && i % 32 != 0 {
                 print!(" ");
             }
             // Print a new line every 16 bytes
-            if i % 16 == 0 && i != 0 {      
+            if i % 32 == 0 && i != 0 {      
                 println!();
                 for i in 0..depth{
                     print!("   ");
