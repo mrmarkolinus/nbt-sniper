@@ -44,10 +44,10 @@ impl MinecraftBinary {
     pub fn format_output(&self) {
     
         for nbttag in self.nbtdata.nbt_tags() {
-            if nbttag.depth() > 0 {
+            if nbttag.position().depth() > 0 {
                 print!("|");  
             }
-            for i in 0..nbttag.depth() {
+            for i in 0..nbttag.position().depth() {
                 print!("___");
             }
             Self::display_tag(nbttag.value(), nbttag.name());
