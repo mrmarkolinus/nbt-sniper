@@ -1,4 +1,5 @@
 use flate2::read::GzDecoder;
+use serde::de;
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
@@ -52,7 +53,6 @@ impl MinecraftBinary {
             Self::display_tag(nbttag, &self.nbtdata.raw_bytes());
 
             println!();
-            println!();
         }
     
     }
@@ -80,54 +80,84 @@ impl MinecraftBinary {
         }
         println!("");
 
-        Self::display_raw_values(nbttag_value, &nbttag.position(), rawbytes);
+        Self::display_raw_values(nbttag, rawbytes);
     }
 
-    fn display_raw_values(nbttag_value : &nbt::NbtTagType, position : &nbt::NbtTagPosition, rawbytes: &Vec<u8>) {
+    fn display_raw_values(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
         
-        for i in 0..position.depth() {
+        for i in 0..nbttag.position().depth() {
             print!("   ");
         }
         print!("Raw Bytes: ");
-        print!("ID[{}:{}] ", position.byte_start_id(), position.byte_end_id());
-        print!("Name[{}:{}] ", position.byte_start_name(), position.byte_end_name());
+        print!("ID[{}:{}] ", nbttag.position().byte_start_id(), nbttag.position().byte_end_id());
+        print!("Name[{}:{}] ", nbttag.position().byte_start_name(), nbttag.position().byte_end_name());
 
         let byte_start;
         let byte_end;
         let byte_start_dump;
         let byte_end_dump;
 
-        match nbttag_value {
+        match nbttag.value() {
             nbt::NbtTagType::Compound(x) => { 
-                byte_start = position.byte_start_value(); 
-                byte_end = position.byte_end_all_with_children();
-                byte_start_dump = position.byte_start_all();
-                byte_end_dump = position.byte_end_all();
+                byte_start = nbttag.position().byte_start_value(); 
+                byte_end = nbttag.position().byte_end_all_with_children();
+                byte_start_dump = nbttag.position().byte_start_all();
+                byte_end_dump = nbttag.position().byte_end_all();
             },
             nbt::NbtTagType::List(x) => { 
-                byte_start = position.byte_start_value(); 
-                byte_end = position.byte_end_all_with_children(); 
-                byte_start_dump = position.byte_start_all();
-                byte_end_dump = position.byte_end_all();
+                byte_start = nbttag.position().byte_start_value(); 
+                byte_end = nbttag.position().byte_end_all_with_children(); 
+                byte_start_dump = nbttag.position().byte_start_all();
+                byte_end_dump = nbttag.position().byte_end_all();
             },
             nbt::NbtTagType::End(x) => { 
-                byte_start = position.byte_start_value(); 
-                byte_end = position.byte_end_value(); 
-                byte_start_dump = position.byte_start_all();
-                byte_end_dump = position.byte_end_all();
+                byte_start = nbttag.position().byte_start_value(); 
+                byte_end = nbttag.position().byte_end_value(); 
+                byte_start_dump = nbttag.position().byte_start_all();
+                byte_end_dump = nbttag.position().byte_end_all();
             },
             _ => { 
-                byte_start = position.byte_start_value(); 
-                byte_end = position.byte_end_value();
-                byte_start_dump = position.byte_start_all();
-                byte_end_dump = position.byte_end_all();
+                byte_start = nbttag.position().byte_start_value(); 
+                byte_end = nbttag.position().byte_end_value();
+                byte_start_dump = nbttag.position().byte_start_all();
+                byte_end_dump = nbttag.position().byte_end_all();
             }
         }  
 
         let dump_hex= &rawbytes[byte_start_dump..byte_end_dump];
 
-        print!("Value[{}:{}] DumpHex{:02X?}", byte_start, byte_end, dump_hex);
+        println!("Value[{}:{}]", byte_start, byte_end);
+        Self::format_output_raw(dump_hex, nbttag.position().depth());
+
     }
+
+    fn format_output_raw(rawbytes: &[u8], depth: i64) {
+        
+        for i in 0..depth{
+            print!("   ");
+        }
+
+        for i in 0..rawbytes.len() {
+            let byte = rawbytes[i];
+            // Print a space every 4 bytes for grouping
+            if i % 4 == 0 && i % 16 != 0 {
+                print!(" ");
+            }
+            // Print a new line every 16 bytes
+            if i % 16 == 0 && i != 0 {      
+                println!();
+                for i in 0..depth{
+                    print!("   ");
+                }
+            }
+            // Print the byte as hex
+            print!("{:02X} ", byte);
+        }
+        // Print a final new line
+        println!();
+    
+    }
+
 
     fn output_json(nbtdata: &nbt::NbtData, output_path: &str) {
         // Convert the Vec to a JSON string
