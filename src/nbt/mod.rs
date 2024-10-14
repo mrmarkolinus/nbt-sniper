@@ -203,7 +203,7 @@ impl NbtTagPosition_RawBytes {
     pub fn set_byte_end_value(&mut self, byte_end_value: u64) {
         self.byte_end_value = byte_end_value;
     }
-    
+
 }
 
 
@@ -245,32 +245,80 @@ impl NbtTagPosition {
         self.children = Vec::new();
     }
     
+    pub fn byte_start_all(&self) -> u64 {
+        self.raw_bytes.byte_end_all()
+    }
+
+    pub fn byte_end_all(&self) -> u64 {
+        self.raw_bytes.byte_end_all()
+    }
+
+    pub fn byte_end_all_with_children(&self) -> u64 {
+        self.raw_bytes.byte_end_all_with_children()
+    }   
+
+    pub fn byte_start_id(&self) -> u64 {
+        self.raw_bytes.byte_start_id()
+    }
+
+    pub fn byte_end_id(&self) -> u64 {
+        self.raw_bytes.byte_end_id()
+    }
+
+    pub fn byte_start_name(&self) -> u64 {
+        self.raw_bytes.byte_start_name()
+    }
+
+    pub fn byte_end_name(&self) -> u64 {
+        self.raw_bytes.byte_end_name()
+    }
+
+    pub fn byte_start_value(&self) -> u64 {
+        self.raw_bytes.byte_start_value()
+    }
+
+    pub fn byte_end_value(&self) -> u64 {
+        self.raw_bytes.byte_end_value()
+    }
+
+    pub fn set_byte_start_all(&mut self, byte_start_all: u64) {
+        self.raw_bytes.set_byte_start_all(byte_start_all)
+    }
+
+    pub fn set_byte_end_all(&mut self, byte_end_all: u64) {
+        self.raw_bytes.set_byte_end_all(byte_end_all)
+    }
+
+    pub fn set_byte_end_all_with_children(&mut self, byte_end_all_with_children: u64) {
+        self.raw_bytes.set_byte_end_all_with_children(byte_end_all_with_children)
+    }
+
+    pub fn set_byte_start_id(&mut self, byte_start_id: u64) {
+        self.raw_bytes.set_byte_start_id(byte_start_id)
+    }
+
+    pub fn set_byte_end_id(&mut self, byte_end_id: u64) {
+        self.raw_bytes.set_byte_end_id(byte_end_id)
+    }
+
+    pub fn set_byte_start_name(&mut self, byte_start_name: u64) {
+        self.raw_bytes.set_byte_start_name(byte_start_name)
+    }
+
+    pub fn set_byte_end_name(&mut self, byte_end_name: u64) {
+        self.raw_bytes.set_byte_end_name(byte_end_name)
+    }
+
+    pub fn set_byte_start_value(&mut self, byte_start_value: u64) {
+        self.raw_bytes.set_byte_start_value(byte_start_value)
+    }
+
+    pub fn set_byte_end_value(&mut self, byte_end_value: u64) {
+        self.raw_bytes.set_byte_end_value(byte_end_value)
+    }
+    
     pub fn children(&mut self) -> &mut Vec<usize> {
         &mut self.children
-    }
-
-    pub fn byte_start(&self) -> u64 {
-        self.raw_bytes.byte_start_all
-    }
-
-    pub fn set_byte_start(&mut self, byte_start: u64) {
-        self.raw_bytes.byte_start_all = byte_start;
-    }
-
-    pub fn byte_end(&self) -> u64 {
-        self.raw_bytes.byte_end_all
-    }
-
-    pub fn set_byte_end(&mut self, byte_end: u64) {
-        self.raw_bytes.byte_end_all = byte_end;
-    }
-
-    pub fn byte_end_with_children(&self) -> u64 {
-        self.raw_bytes.byte_end_all_with_children
-    }
-
-    pub fn set_byte_end_with_children(&mut self, byte_end_with_children: u64) {
-        self.raw_bytes.byte_end_all_with_children = byte_end_with_children;
     }
 
     pub fn index(&self) -> usize {
@@ -462,7 +510,7 @@ impl NbtData {
             match self.nbt_parser.state() {
                 fsm::ParseNbtFsm::Normal => {
                     //(tag_id, tag_name, tag_value, depth_delta) = parse_tag_id_name_and_value(test_sequence, nbt_parser, &mut unfinished_lists, nbt_parent_index)?;
-                    new_tag_position
+                    new_tag_position.set_byte_start_id(byte_start);
                     tag_id = match fsm::parse::nbt_tag_id(&mut cursor) {
                         Ok(id) => {
                             match id {
