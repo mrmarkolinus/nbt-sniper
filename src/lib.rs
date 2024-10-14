@@ -45,14 +45,13 @@ impl MinecraftBinary {
     pub fn format_output(&self) {
     
         for nbttag in self.nbtdata.nbt_tags() {
-            if nbttag.position().depth() > 0 {
-                print!("|");  
-            }
+
             for i in 0..nbttag.position().depth() {
-                print!("___");
+                print!("   ");
             }
             Self::display_tag(nbttag, &self.nbtdata.raw_bytes());
 
+            println!();
             println!();
         }
     
@@ -79,11 +78,16 @@ impl MinecraftBinary {
             nbt::NbtTagType::IntArray(x) => print!("{}[IntArray]: {:?}", tag_name, x),
             nbt::NbtTagType::LongArray(x) => print!("{}[LongArray]: {:?}", tag_name, x),
         }
+        println!("");
 
         Self::display_raw_values(nbttag_value, &nbttag.position(), rawbytes);
     }
 
     fn display_raw_values(nbttag_value : &nbt::NbtTagType, position : &nbt::NbtTagPosition, rawbytes: &Vec<u8>) {
+        
+        for i in 0..position.depth() {
+            print!("   ");
+        }
         print!("Raw Bytes: ");
         print!("ID[{}:{}] ", position.byte_start_id(), position.byte_end_id());
         print!("Name[{}:{}] ", position.byte_start_name(), position.byte_end_name());
@@ -122,9 +126,7 @@ impl MinecraftBinary {
 
         let dump_hex= &rawbytes[byte_start_dump..byte_end_dump];
 
-        print!("Value[{}:{}] ", byte_start, byte_end);
-        println!();
-        print!("Dump Hex: {:x?}", dump_hex);
+        print!("Value[{}:{}] DumpHex{:02X?}", byte_start, byte_end, dump_hex);
     }
 
     fn output_json(nbtdata: &nbt::NbtData, output_path: &str) {
