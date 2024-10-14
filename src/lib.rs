@@ -50,13 +50,16 @@ impl MinecraftBinary {
             for i in 0..nbttag.position().depth() {
                 print!("___");
             }
-            Self::display_tag(nbttag.value(), nbttag.name());
+            Self::display_tag(nbttag);
             println!();
         }
     
     }
 
-    fn display_tag(nbttag_value: &nbt::NbtTagType, tag_name: &str) {
+    fn display_tag(nbttag: &nbt::NbtTag) {
+
+        let nbttag_value = nbttag.value();
+        let tag_name = nbttag.name();
 
         match nbttag_value {
             nbt::NbtTagType::End(_) => print!("End - {}", tag_name),
@@ -69,10 +72,19 @@ impl MinecraftBinary {
             nbt::NbtTagType::ByteArray(x) => print!("ByteArray - {}: {:?}", tag_name, x),
             nbt::NbtTagType::String(x) => print!("String - {}: {:?}", tag_name, x),
             nbt::NbtTagType::List(x) => print!("List - {}: {:?}", tag_name, x),
-            nbt::NbtTagType::Compound(x) => print!("Compound - {}: {:?}", tag_name, x),
+            nbt::NbtTagType::Compound(x) => print!("Compound - {}: {:?} - ", tag_name, x),
             nbt::NbtTagType::IntArray(x) => print!("IntArray - {}: {:?}", tag_name, x),
             nbt::NbtTagType::LongArray(x) => print!("LongArray - {}: {:?}", tag_name, x),
         }
+
+        Self::display_raw_values(&nbttag.position());
+    }
+
+    fn display_raw_values(position : &nbt::NbtTagPosition) {
+        print!("Raw Bytes: ");
+        print!("ID[{}:{}] ", position.byte_start_id(), position.byte_end_id());
+        print!("Name[{}:{}] ", position.byte_start_name(), position.byte_end_name());
+        print!("Value[{}:{}] ", position.byte_start_value(), position.byte_end_value());
     }
     
 }

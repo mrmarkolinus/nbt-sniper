@@ -93,7 +93,7 @@ pub enum NbtTagType {
 }
 
 #[derive(Debug, Clone, Serialize)]
-struct NbtTagPosition_RawBytes {
+struct NbtTagPositionRawBytes {
     byte_start_all: u64,
     byte_end_all: u64,
     byte_end_all_with_children: u64,
@@ -105,9 +105,9 @@ struct NbtTagPosition_RawBytes {
     byte_end_value: u64,
 }
 
-impl NbtTagPosition_RawBytes {
-    pub fn new() -> NbtTagPosition_RawBytes {
-        NbtTagPosition_RawBytes {
+impl NbtTagPositionRawBytes {
+    pub fn new() -> NbtTagPositionRawBytes {
+        NbtTagPositionRawBytes {
             byte_start_all: 0,
             byte_end_all: 0,
             byte_end_all_with_children: 0,
@@ -209,7 +209,7 @@ impl NbtTagPosition_RawBytes {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct NbtTagPosition {
-    raw_bytes: NbtTagPosition_RawBytes,
+    raw_bytes: NbtTagPositionRawBytes,
     index: usize,
     depth: i64,
     parent: usize,
@@ -219,17 +219,7 @@ pub struct NbtTagPosition {
 impl NbtTagPosition {
     pub fn new() -> NbtTagPosition {
         NbtTagPosition {
-            raw_bytes: NbtTagPosition_RawBytes {    
-                byte_start_all: 0,
-                byte_end_all: 0,
-                byte_end_all_with_children: 0,
-                byte_start_id: 0,
-                byte_end_id: 0,
-                byte_start_name: 0,
-                byte_end_name: 0,
-                byte_start_value: 0,
-                byte_end_value: 0,
-            },
+            raw_bytes: NbtTagPositionRawBytes::new(),
             index: 0,
             depth: 0,
             parent: 0,
@@ -245,6 +235,7 @@ impl NbtTagPosition {
         self.children = Vec::new();
     }
     
+
     pub fn byte_start_all(&self) -> u64 {
         self.raw_bytes.byte_end_all()
     }
