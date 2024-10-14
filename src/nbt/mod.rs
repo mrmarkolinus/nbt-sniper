@@ -92,6 +92,93 @@ pub enum NbtTagType {
     LongArray(Vec<i64>),
 }
 
+struct NbtTagPosition {
+    byte_start: u64,
+    byte_end: u64,
+    byte_end_with_children: u64,
+    index: usize,
+    depth: i64,
+    parent: usize,
+    children: Vec<usize>,
+} 
+
+impl NbtTagPosition {
+    pub fn new() -> NbtTagPosition {
+        NbtTagPosition {
+            byte_start: 0,
+            byte_end: 0,
+            byte_end_with_children: 0,
+            index: 0,
+            depth: 0,
+            parent: 0,
+            children: Vec::new(),
+        } 
+    }
+
+    pub fn reset(&mut self) {
+        self.byte_start = 0;
+        self.byte_end = 0;
+        self.byte_end_with_children = 0;
+        self.index = 0;
+        self.depth = 0;
+        self.parent = 0;
+        self.children = Vec::new();
+    }
+    
+    pub fn children(&self) -> &Vec<usize> {
+        &self.children
+    }
+
+    pub fn byte_start(&self) -> u64 {
+        self.byte_start
+    }
+
+    pub fn set_byte_start(&mut self, byte_start: u64) {
+        self.byte_start = byte_start;
+    }
+
+    pub fn byte_end(&self) -> u64 {
+        self.byte_end
+    }
+
+    pub fn set_byte_end(&mut self, byte_end: u64) {
+        self.byte_end = byte_end;
+    }
+
+    pub fn byte_end_with_children(&self) -> u64 {
+        self.byte_end_with_children
+    }
+
+    pub fn set_byte_end_with_children(&mut self, byte_end_with_children: u64) {
+        self.byte_end_with_children = byte_end_with_children;
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    pub fn set_index(&mut self, index: usize) {
+        self.index = index;
+    }   
+
+    pub fn depth(&self) -> i64 {
+        self.depth
+    }
+
+    pub fn set_depth(&mut self, depth: i64) {
+        self.depth = depth;
+    }
+
+    pub fn parent(&self) -> usize {
+        self.parent
+    }
+
+    pub fn set_parent(&mut self, parent: usize) {
+        self.parent = parent;
+    }
+
+}
+
 #[derive(Debug, Clone, Serialize)] 
 pub struct NbtTag {
     name: String,
