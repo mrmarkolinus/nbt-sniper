@@ -40,6 +40,11 @@ pub enum NbtTagId {
 }
 
 impl NbtTagId {
+
+    pub fn new() -> NbtTagId {
+        NbtTagId::default()
+    }
+
     pub fn from_u8(value: u8) -> Option<NbtTagId> {
         match value {
             0 => Some(NbtTagId::End),
@@ -352,6 +357,11 @@ pub struct NbtTag {
 }
 
 impl NbtTag {
+
+    pub fn new() -> NbtTag {
+        NbtTag::default()
+    }
+
     pub fn value(&self) -> &NbtTagType {
         &self.value
     }

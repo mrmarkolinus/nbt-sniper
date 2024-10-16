@@ -20,7 +20,7 @@ pub struct NbtListParser {
 impl NbtListParser {
     pub fn new() -> NbtListParser {
         NbtListParser {
-            list_tag_id: nbt::NbtTagId::End,
+            list_tag_id: nbt::NbtTagId::default(),
             list_len: 0,
             list_elem_count: 0,
         }
