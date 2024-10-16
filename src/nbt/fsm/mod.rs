@@ -64,9 +64,9 @@ pub struct NbtParser {
 }
 
 impl NbtParser {
-    pub fn new(state: ParseNbtFsm) -> NbtParser {
+    pub fn new() -> NbtParser {
         NbtParser {
-            state: state,
+            state: ParseNbtFsm::default(),
             list_parser: NbtListParser::new(),
             unfinished_lists: Vec::<NbtListParser>::new(),
             //cursor: cursor,
@@ -227,7 +227,7 @@ mod tests {
     // Tests for NbtParser
     #[test]
     fn test_nbt_parser_new() {
-        let parser = NbtParser::new(ParseNbtFsm::Normal);
+        let parser = NbtParser::new();
         match parser.state {
             ParseNbtFsm::Normal => (),
             _ => panic!("Initial state should be Normal"),
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_nbt_parser_change_state_to() {
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         parser.change_state_to(ParseNbtFsm::List);
         match parser.state {
             ParseNbtFsm::List => (),
@@ -254,27 +254,13 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_nbt_parser_state() {
-        let parser = NbtParser::new(ParseNbtFsm::Normal);
-        match *parser.state() {
-            ParseNbtFsm::Normal => (),
-            _ => panic!("State should be Normal"),
-        }
-
-        let mut parser = NbtParser::new(ParseNbtFsm::List);
-        match *parser.state() {
-            ParseNbtFsm::List => (),
-            _ => panic!("State should be List"),
-        }
-    }
 
     #[test]
     fn test_nbt_parser_index() {
-        let parser = NbtParser::new(ParseNbtFsm::Normal);
+        let parser = NbtParser::new();
         assert_eq!(*parser.index(), 0);
 
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         parser.increment_index();
         assert_eq!(*parser.index(), 1);
         parser.increment_index();
@@ -283,10 +269,10 @@ mod tests {
 
     #[test]
     fn test_nbt_parser_tree_depth() {
-        let parser = NbtParser::new(ParseNbtFsm::Normal);
+        let parser = NbtParser::new();
         assert_eq!(*parser.tree_depth(), 0);
 
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         parser.set_tree_depth(3);
         assert_eq!(*parser.tree_depth(), 3);
 
@@ -296,7 +282,7 @@ mod tests {
 
     #[test]
     fn test_nbt_parser_set_tree_depth() {
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         parser.set_tree_depth(10);
         assert_eq!(parser.tree_depth, 10);
 
@@ -306,7 +292,7 @@ mod tests {
 
     #[test]
     fn test_nbt_parser_increment_index() {
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         assert_eq!(parser.index, 0);
         parser.increment_index();
         assert_eq!(parser.index, 1);
@@ -316,7 +302,7 @@ mod tests {
 
     #[test]
     fn test_nbt_parser_unfinished_lists() {
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         assert!(parser.unfinished_lists.is_empty());
 
         let list1 = NbtListParser::new();
@@ -332,7 +318,7 @@ mod tests {
 
     #[test]
     fn test_nbt_parser_list_parser_methods() {
-        let mut parser = NbtParser::new(ParseNbtFsm::Normal);
+        let mut parser = NbtParser::new();
         let mut list_parser = &mut parser.list_parser;
 
         // Test default values

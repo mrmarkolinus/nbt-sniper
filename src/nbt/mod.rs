@@ -451,7 +451,7 @@ impl NbtData {
     pub fn new(file_buffer: Vec<u8>) -> NbtData {
         NbtData {
             tags: Vec::<NbtTag>::new(),
-            nbt_parser: fsm::NbtParser::new(fsm::ParseNbtFsm::Normal),
+            nbt_parser: fsm::NbtParser::new(),
             raw_bytes: file_buffer,
         }
     }
