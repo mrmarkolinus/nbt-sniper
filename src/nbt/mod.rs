@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::io;
 use std::io::{Cursor, Seek, SeekFrom};
@@ -21,7 +21,7 @@ pub enum NbtReadError {
     InvalidNbtDepth, // Custom error for tag id validation
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Default, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize)]
 pub enum NbtTagId {
     #[default]
     End = 0,
@@ -64,7 +64,7 @@ impl NbtTagId {
         }
     }
 
-    pub fn as_u8(&self) -> u8 {
+    pub fn into_u8(&self) -> u8 {
         match self {
             NbtTagId::End => 0,
             NbtTagId::Byte => 1,
@@ -83,7 +83,7 @@ impl NbtTagId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum NbtTagType {
     End(Option<u8>),
     Byte(i8),
@@ -106,7 +106,7 @@ impl Default for NbtTagType {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 struct NbtTagPositionRawBytes {
     byte_start_all: usize,
     byte_end_all: usize,
@@ -219,7 +219,7 @@ impl NbtTagPositionRawBytes {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub struct NbtTagPosition {
     raw_bytes: NbtTagPositionRawBytes,
     index: usize,
@@ -349,7 +349,7 @@ impl NbtTagPosition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Default, Serialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct NbtTag {
     name: String,
     value: NbtTagType,
@@ -443,7 +443,7 @@ impl NbtTag {
     } */
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct NbtData {
     tags: Vec<NbtTag>,
     nbt_parser: fsm::NbtParser,

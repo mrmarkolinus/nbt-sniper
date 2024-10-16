@@ -1,8 +1,10 @@
+use serde::{Serialize, Deserialize};
+
 use crate::nbt;
 
 pub mod parse;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub enum ParseNbtFsm {
     #[default]
     Normal,
@@ -10,7 +12,7 @@ pub enum ParseNbtFsm {
     EndOfFile,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub struct NbtListParser {
     list_tag_id: nbt::NbtTagId,
     list_len: i32,
@@ -53,7 +55,7 @@ impl NbtListParser {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub struct NbtParser {
     state: ParseNbtFsm,
     pub list_parser: NbtListParser,

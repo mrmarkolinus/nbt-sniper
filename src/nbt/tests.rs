@@ -41,7 +41,7 @@ mod tests {
     }
 
     #[test]
-    fn test_nbt_tag_id_as_u8() {
+    fn test_nbt_tag_id_into_u8() {
         let variants = vec![
             (NbtTagId::End, 0u8),
             (NbtTagId::Byte, 1),
@@ -59,7 +59,7 @@ mod tests {
         ];
 
         for (variant, expected) in variants {
-            assert_eq!(variant.as_u8(), expected);
+            assert_eq!(variant.into_u8(), expected);
         }
     }
 
@@ -300,7 +300,7 @@ mod tests {
         // Int Value: 42 (i32 big endian)
 
         let mut buffer = Vec::new();
-        buffer.push(NbtTagId::Int.as_u8());
+        buffer.push(NbtTagId::Int.into_u8());
 
         // Name length: 4
         buffer.extend(&4u16.to_be_bytes());
@@ -327,13 +327,13 @@ mod tests {
         let mut buffer = Vec::new();
 
         // First Tag: Byte
-        buffer.push(NbtTagId::Byte.as_u8());
+        buffer.push(NbtTagId::Byte.into_u8());
         buffer.extend(&1u16.to_be_bytes()); // Name length
         buffer.extend("A".as_bytes());
         buffer.push(1i8 as u8); // Byte value
 
         // Second Tag: String
-        buffer.push(NbtTagId::String.as_u8());
+        buffer.push(NbtTagId::String.into_u8());
         buffer.extend(&1u16.to_be_bytes()); // Name length
         buffer.extend("B".as_bytes());
         buffer.extend(&5u16.to_be_bytes()); // String length
@@ -364,18 +364,18 @@ mod tests {
         let mut buffer = Vec::new();
 
         // Compound Tag
-        buffer.push(NbtTagId::Compound.as_u8());
+        buffer.push(NbtTagId::Compound.into_u8());
         buffer.extend(&6u16.to_be_bytes()); // Name length
         buffer.extend("Compound".as_bytes());
 
         // Nested Int Tag
-        buffer.push(NbtTagId::Int.as_u8());
+        buffer.push(NbtTagId::Int.into_u8());
         buffer.extend(&3u16.to_be_bytes()); // Name length
         buffer.extend("Int".as_bytes());
         buffer.extend(&100i32.to_be_bytes()); // Int value
 
         // End Tag
-        buffer.push(NbtTagId::End.as_u8());
+        buffer.push(NbtTagId::End.into_u8());
 
         let nbt_data = NbtData::from_buf(buffer).unwrap();
         assert_eq!(nbt_data.nbt_tags().len(), 3);
@@ -409,10 +409,10 @@ mod tests {
         let mut buffer = Vec::new();
 
         // List Tag
-        buffer.push(NbtTagId::List.as_u8());
+        buffer.push(NbtTagId::List.into_u8());
         buffer.extend(&4u16.to_be_bytes()); // Name length
         buffer.extend("List".as_bytes());
-        buffer.push(NbtTagId::String.as_u8()); // List Element Type
+        buffer.push(NbtTagId::String.into_u8()); // List Element Type
         buffer.extend(&2i32.to_be_bytes()); // List Length
 
         // String 1

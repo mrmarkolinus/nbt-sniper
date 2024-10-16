@@ -6,10 +6,11 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 use std::vec;
+use serde::{Deserialize, Serialize};
 
 pub mod nbt;
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct MinecraftBinary {
     file_path: String,
     nbtdata: nbt::NbtData,
