@@ -3,8 +3,18 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
+use thiserror::Error;
 
 pub mod nbt;
+
+#[derive(Error, Debug)]
+pub enum MinecraftBinaryError {
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error), // Automatically convert `io::Error` to `NbtReadError`
+
+    #[error("Json could not be created")]
+    JsonWriteFailure, // Custom error for content validation
+}
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct MinecraftBinary {
@@ -13,7 +23,11 @@ pub struct MinecraftBinary {
 }
 
 impl MinecraftBinary {
-    pub fn new(file_path: String) -> Self {
+    pub fn new() -> Self {
+        MinecraftBinary::default()
+    }
+
+    pub fn read(file_path: String) -> Self {
         let buffer = Self::read_file(&file_path).unwrap();
         let nbtdata = nbt::NbtData::from_buf(buffer).unwrap();
         MinecraftBinary { file_path, nbtdata }
@@ -162,19 +176,12 @@ impl MinecraftBinary {
         println!();
     }
 
-    /* pub fn to_json(&self, output_path: &str) {
-        // Convert the Vec to a JSON string
-        //let json_output = serde_json::to_string_pretty(&nbtdata.nbt_tags()).unwrap();
-
-        // Print the JSON
-        //println!("{}", json_output);
-
-        // Open (or create) a file to write to
-        let file = File::create(output_path).expect("Impossible to create file");
-
-        // Write the JSON to the file
-        serde_json::to_writer_pretty(file, self.nbtdata.nbt_tags()).unwrap();
-    } */
+    pub fn to_json(&self, output_path: &str) -> Result<(), MinecraftBinaryError> {
+        let file = fs::File::create(output_path)?;
+        serde_json::to_writer_pretty(file, self.nbtdata.nbt_tags())
+            .map_err(|_| MinecraftBinaryError::JsonWriteFailure)?;
+        Ok(())
+    }
 }
 /*
 fn main() {
