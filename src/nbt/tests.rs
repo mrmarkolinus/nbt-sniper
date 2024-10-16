@@ -3,10 +3,12 @@ mod tests {
     use super::*;
     use serde_json;
     use std::io::Cursor;
-    
+
     // Mocking the fsm module
-    use crate::nbt::fsm; 
-    use crate::nbt::{NbtTagId, NbtTagType, NbtTagPositionRawBytes, NbtTagPosition, NbtTag, NbtData, NbtReadError};
+    use crate::nbt::fsm;
+    use crate::nbt::{
+        NbtData, NbtReadError, NbtTag, NbtTagId, NbtTagPosition, NbtTagPositionRawBytes, NbtTagType,
+    };
 
     // Now, write tests for NbtTagId
     #[test]
@@ -247,7 +249,7 @@ mod tests {
         let mut tag = NbtTag::default();
         tag.set_name("TestTag".to_string());
         tag.set_value(NbtTagType::Int(123));
-        
+
         let mut pos = NbtTagPosition::new();
         pos.set_byte_start_all(10);
         pos.set_byte_end_all(20);

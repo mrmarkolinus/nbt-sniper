@@ -2,7 +2,6 @@ use crate::nbt;
 
 pub mod parse;
 
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
 pub enum ParseNbtFsm {
     #[default]
@@ -64,7 +63,6 @@ pub struct NbtParser {
     tree_depth: i64,
 }
 
-
 impl NbtParser {
     pub fn new(state: ParseNbtFsm) -> NbtParser {
         NbtParser {
@@ -105,7 +103,6 @@ impl NbtParser {
         self.index = self.index + 1;
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -196,7 +193,7 @@ mod tests {
 
         // After 1 more increment, list_elem_count = 4
         parser.increment(); // 4
-        // list_len -1 = 4, so list_elem_count >= list_len -1
+                            // list_len -1 = 4, so list_elem_count >= list_len -1
         assert!(parser.is_end());
 
         // Incrementing beyond

@@ -96,7 +96,9 @@ pub enum NbtTagType {
 }
 
 impl Default for NbtTagType {
-    fn default() -> Self { NbtTagType::End(None) }
+    fn default() -> Self {
+        NbtTagType::End(None)
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize)]
