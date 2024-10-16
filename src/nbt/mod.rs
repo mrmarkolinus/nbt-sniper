@@ -18,8 +18,9 @@ pub enum NbtReadError {
     InvalidNbtDepth, // Custom error for tag id validation
 }
 
-#[derive(Debug, Copy, Clone, Serialize, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Default, Serialize)]
 pub enum NbtTagId {
+    #[default]
     End = 0,
     Byte = 1,
     Short = 2,
@@ -74,7 +75,7 @@ impl NbtTagId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
 pub enum NbtTagType {
     End(Option<u8>),
     Byte(i8),
@@ -91,7 +92,11 @@ pub enum NbtTagType {
     LongArray(Vec<i64>),
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+impl Default for NbtTagType {
+    fn default() -> Self { NbtTagType::End(None) }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize)]
 struct NbtTagPositionRawBytes {
     byte_start_all: usize,
     byte_end_all: usize,
@@ -204,7 +209,7 @@ impl NbtTagPositionRawBytes {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize)]
 pub struct NbtTagPosition {
     raw_bytes: NbtTagPositionRawBytes,
     index: usize,
@@ -334,7 +339,7 @@ impl NbtTagPosition {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize)]
 pub struct NbtTag {
     name: String,
     value: NbtTagType,
@@ -423,6 +428,7 @@ impl NbtTag {
     } */
 }
 
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct NbtData {
     tags: Vec<NbtTag>,
     nbt_parser: fsm::NbtParser,

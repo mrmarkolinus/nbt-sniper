@@ -9,6 +9,7 @@ use std::vec;
 
 pub mod nbt;
 
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct MinecraftBinary {
     file_path: String,
     nbtdata: nbt::NbtData,
