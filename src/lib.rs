@@ -64,6 +64,10 @@ impl NbtFile {
         }
     }
 
+    pub fn dump(&self) {
+        Self::format_output_raw(self.nbtdata.raw_bytes(), 0);
+    }
+
     fn display_tag(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
         let nbttag_value = nbttag.value();
         let tag_name = nbttag.name();
