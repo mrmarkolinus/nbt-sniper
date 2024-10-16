@@ -37,8 +37,12 @@ impl NbtFile {
         &self.file_path
     }
 
-    pub fn nbtdata(&self) -> &nbt::NbtData {
-        &self.nbtdata
+    pub fn nbt_tags(&self) -> &Vec<nbt::NbtTag> {
+        &self.nbtdata.nbt_tags()
+    }
+
+    pub fn as_bytes(&self) -> &Vec<u8> {
+        self.nbtdata.raw_bytes()
     }
 
     fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
