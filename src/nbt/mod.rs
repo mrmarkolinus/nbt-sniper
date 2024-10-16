@@ -6,6 +6,9 @@ use thiserror::Error;
 
 mod fsm;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Error, Debug)]
 pub enum NbtReadError {
     #[error("I/O error: {0}")]

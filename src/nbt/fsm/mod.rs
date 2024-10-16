@@ -106,7 +106,7 @@ impl NbtParser {
     }
 }
 
-/*
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -370,4 +370,3 @@ mod tests {
         assert_eq!(list_parser.list_elem_count, 0);
     }
 }
- */
