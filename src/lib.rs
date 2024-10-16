@@ -1,11 +1,9 @@
 use flate2::read::GzDecoder;
-use serde::de;
 use serde_json;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
-use std::vec;
 use serde::{Deserialize, Serialize};
 
 pub mod nbt;

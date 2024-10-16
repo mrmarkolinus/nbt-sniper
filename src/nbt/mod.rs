@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::io;
 use std::io::{Cursor, Seek, SeekFrom};
 use thiserror::Error;
