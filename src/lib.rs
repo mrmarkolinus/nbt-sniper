@@ -64,7 +64,7 @@ impl NbtFile {
         }
     }
 
-    pub fn dump(&self) {
+    pub fn dump_hex(&self) {
         Self::format_output_raw(self.nbtdata.raw_bytes(), 0);
     }
 
