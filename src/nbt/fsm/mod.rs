@@ -5,7 +5,7 @@ pub mod parse;
 pub enum ParseNbtFsm {
     Normal,
     List,
-    EndOfFile
+    EndOfFile,
 }
 
 #[derive(Debug, Clone)]
@@ -17,7 +17,11 @@ pub struct NbtListParser {
 
 impl NbtListParser {
     pub fn new() -> NbtListParser {
-        NbtListParser { list_tag_id: nbt::NbtTagId::End, list_len: 0, list_elem_count: 0 }
+        NbtListParser {
+            list_tag_id: nbt::NbtTagId::End,
+            list_len: 0,
+            list_elem_count: 0,
+        }
     }
 
     pub fn set_id(&mut self, tag_id: nbt::NbtTagId) {
@@ -58,13 +62,14 @@ pub struct NbtParser {
 
 impl NbtParser {
     pub fn new(state: ParseNbtFsm) -> NbtParser {
-        NbtParser { state: state, 
-                    list_parser: NbtListParser::new(),
-                    unfinished_lists: Vec::<NbtListParser>::new(),
-                    //cursor: cursor,
-                    index: 0,
-                    tree_depth: 0
-                    }
+        NbtParser {
+            state: state,
+            list_parser: NbtListParser::new(),
+            unfinished_lists: Vec::<NbtListParser>::new(),
+            //cursor: cursor,
+            index: 0,
+            tree_depth: 0,
+        }
     }
 
     pub fn change_state_to(&mut self, state: ParseNbtFsm) {
@@ -94,5 +99,4 @@ impl NbtParser {
     pub fn increment_index(&mut self) {
         self.index = self.index + 1;
     }
-
 }
