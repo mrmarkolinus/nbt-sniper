@@ -1,10 +1,8 @@
 use flate2::read::GzDecoder;
-use serde_json;
+use serde::{Deserialize, Serialize};
 use std::fs;
-use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
-use serde::{Deserialize, Serialize};
 
 pub mod nbt;
 
@@ -43,7 +41,7 @@ impl MinecraftBinary {
 
     pub fn format_output(&self) {
         for nbttag in self.nbtdata.nbt_tags() {
-            for i in 0..nbttag.position().depth() {
+            for _ in 0..nbttag.position().depth() {
                 print!("   ");
             }
             Self::display_tag(nbttag, &self.nbtdata.raw_bytes());
@@ -64,14 +62,14 @@ impl MinecraftBinary {
             nbt::NbtTagType::Long(x) => print!("{}[Long]: {}", tag_name, x),
             nbt::NbtTagType::Float(x) => print!("{}[Float]: {}", tag_name, x),
             nbt::NbtTagType::Double(x) => print!("{}[Double]: {}", tag_name, x),
-            nbt::NbtTagType::ByteArray(x) => {
+            nbt::NbtTagType::ByteArray(_) => {
                 print!("{}[ByteArray]: [Values... see dump]", tag_name)
             }
             nbt::NbtTagType::String(x) => print!("{}[String]: {:?}", tag_name, x),
             nbt::NbtTagType::List(x) => print!("{}[List]: {:?}", tag_name, x),
-            nbt::NbtTagType::Compound(x) => print!("{}[Compound]: ", tag_name),
-            nbt::NbtTagType::IntArray(x) => print!("{}[IntArray]: [Values... see dump]", tag_name),
-            nbt::NbtTagType::LongArray(x) => {
+            nbt::NbtTagType::Compound(_) => print!("{}[Compound]: ", tag_name),
+            nbt::NbtTagType::IntArray(_) => print!("{}[IntArray]: [Values... see dump]", tag_name),
+            nbt::NbtTagType::LongArray(_) => {
                 print!("{}[LongArray]: [Values... see dump]", tag_name)
             }
         }
@@ -81,7 +79,7 @@ impl MinecraftBinary {
     }
 
     fn display_raw_values(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
-        for i in 0..nbttag.position().depth() {
+        for _ in 0..nbttag.position().depth() {
             print!("   ");
         }
         print!("Raw Bytes: ");
@@ -102,19 +100,19 @@ impl MinecraftBinary {
         let byte_end_dump;
 
         match nbttag.value() {
-            nbt::NbtTagType::Compound(x) => {
+            nbt::NbtTagType::Compound(_x) => {
                 byte_start = nbttag.position().byte_start_value();
                 byte_end = nbttag.position().byte_end_all_with_children();
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
             }
-            nbt::NbtTagType::List(x) => {
+            nbt::NbtTagType::List(_x) => {
                 byte_start = nbttag.position().byte_start_value();
                 byte_end = nbttag.position().byte_end_all_with_children();
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
             }
-            nbt::NbtTagType::End(x) => {
+            nbt::NbtTagType::End(_x) => {
                 byte_start = nbttag.position().byte_start_value();
                 byte_end = nbttag.position().byte_end_value();
                 byte_start_dump = nbttag.position().byte_start_all();
@@ -132,7 +130,7 @@ impl MinecraftBinary {
 
         println!("Value[{}:{}]", byte_start, byte_end);
 
-        for i in 0..nbttag.position().depth() {
+        for _ in 0..nbttag.position().depth() {
             print!("   ");
         }
         println!("Hex Dump[{}:{}]", byte_start_dump, byte_end_dump);
@@ -140,7 +138,7 @@ impl MinecraftBinary {
     }
 
     fn format_output_raw(rawbytes: &[u8], depth: i64) {
-        for i in 0..depth {
+        for _ in 0..depth {
             print!("   ");
         }
 
@@ -153,7 +151,7 @@ impl MinecraftBinary {
             // Print a new line every 16 bytes
             if i % 32 == 0 && i != 0 {
                 println!();
-                for i in 0..depth {
+                for _ in 0..depth {
                     print!("   ");
                 }
             }
@@ -164,7 +162,7 @@ impl MinecraftBinary {
         println!();
     }
 
-    fn output_json(nbtdata: &nbt::NbtData, output_path: &str) {
+    /* pub fn to_json(&self, output_path: &str) {
         // Convert the Vec to a JSON string
         //let json_output = serde_json::to_string_pretty(&nbtdata.nbt_tags()).unwrap();
 
@@ -175,8 +173,8 @@ impl MinecraftBinary {
         let file = File::create(output_path).expect("Impossible to create file");
 
         // Write the JSON to the file
-        serde_json::to_writer_pretty(file, &nbtdata.nbt_tags()).unwrap();
-    }
+        serde_json::to_writer_pretty(file, self.nbtdata.nbt_tags()).unwrap();
+    } */
 }
 /*
 fn main() {

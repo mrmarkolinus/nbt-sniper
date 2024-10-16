@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::nbt;
 
@@ -255,7 +255,6 @@ mod tests {
             _ => panic!("State should be EndOfFile"),
         }
     }
-
 
     #[test]
     fn test_nbt_parser_index() {

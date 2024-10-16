@@ -20,7 +20,9 @@ pub enum NbtReadError {
     InvalidNbtDepth, // Custom error for tag id validation
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize)]
+#[derive(
+    Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize,
+)]
 pub enum NbtTagId {
     #[default]
     End = 0,
@@ -39,7 +41,6 @@ pub enum NbtTagId {
 }
 
 impl NbtTagId {
-
     pub fn new() -> NbtTagId {
         NbtTagId::default()
     }
@@ -356,7 +357,6 @@ pub struct NbtTag {
 }
 
 impl NbtTag {
-
     pub fn new() -> NbtTag {
         NbtTag::default()
     }
