@@ -8,7 +8,7 @@ use thiserror::Error;
 pub mod nbt;
 
 #[derive(Error, Debug)]
-pub enum MinecraftBinaryError {
+pub enum NbtFileError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error), // Automatically convert `io::Error` to `NbtReadError`
 
@@ -17,20 +17,20 @@ pub enum MinecraftBinaryError {
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
-pub struct MinecraftBinary {
+pub struct NbtFile {
     file_path: String,
     nbtdata: nbt::NbtData,
 }
 
-impl MinecraftBinary {
+impl NbtFile {
     pub fn new() -> Self {
-        MinecraftBinary::default()
+        NbtFile::default()
     }
 
     pub fn read(file_path: String) -> Self {
         let buffer = Self::read_file(&file_path).unwrap();
         let nbtdata = nbt::NbtData::from_buf(buffer).unwrap();
-        MinecraftBinary { file_path, nbtdata }
+        NbtFile { file_path, nbtdata }
     }
 
     pub fn file_path(&self) -> &str {
@@ -176,10 +176,10 @@ impl MinecraftBinary {
         println!();
     }
 
-    pub fn to_json(&self, output_path: &str) -> Result<(), MinecraftBinaryError> {
+    pub fn to_json(&self, output_path: &str) -> Result<(), NbtFileError> {
         let file = fs::File::create(output_path)?;
         serde_json::to_writer_pretty(file, self.nbtdata.nbt_tags())
-            .map_err(|_| MinecraftBinaryError::JsonWriteFailure)?;
+            .map_err(|_| NbtFileError::JsonWriteFailure)?;
         Ok(())
     }
 }
