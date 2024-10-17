@@ -4,6 +4,7 @@ use std::fs;
 use std::io::BufReader;
 use std::io::Read;
 use thiserror::Error;
+use std::collections::HashMap;
 
 pub mod nbt;
 
@@ -43,6 +44,10 @@ impl NbtFile {
 
     pub fn as_bytes(&self) -> &Vec<u8> {
         self.nbtdata.raw_bytes()
+    }
+
+    pub fn nbt_hashmap(&self) -> &HashMap<String, usize> {
+        &self.nbtdata.tags_map()
     }
 
     fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {

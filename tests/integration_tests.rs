@@ -25,6 +25,15 @@ fn bigtest() {
 
     println!("");
     println!("-------------------------");
+    println!("Print Hashmap of NbtTags");
+    println!("{:?}\n", mc_bin.nbt_hashmap());
+    println!("Search a NbtTag");
+    if let Some(&nbt_index) = mc_bin.nbt_hashmap().get("doubleTest") {
+        println!("doubleTest: {:?}", mc_bin.nbt_tags()[nbt_index]);
+    }
+
+    println!("");
+    println!("-------------------------");
     println!("Raw data using as_bytes() method");
     println!("{:?}\n", mc_bin.as_bytes());
 }

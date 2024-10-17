@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::io;
 use std::io::{Cursor, Seek, SeekFrom};
 use thiserror::Error;
+use std::collections::HashMap;
 
 mod fsm;
 
@@ -447,6 +448,7 @@ pub struct NbtData {
     tags: Vec<NbtTag>,
     nbt_parser: fsm::NbtParser,
     raw_bytes: Vec<u8>,
+    tags_map: HashMap<String, usize>,
 }
 
 impl NbtData {
@@ -462,6 +464,7 @@ impl NbtData {
             tags: Vec::<NbtTag>::new(),
             nbt_parser: fsm::NbtParser::new(),
             raw_bytes: file_buffer,
+            tags_map: HashMap::new(),
         }
     }
 
@@ -473,7 +476,11 @@ impl NbtData {
         &self.raw_bytes
     }
 
-    fn parse(&mut self) -> Result<(), NbtReadError> {
+    pub fn tags_map(&self) -> &HashMap<String, usize> {
+        &self.tags_map
+    }
+
+    pub fn parse(&mut self) -> Result<(), NbtReadError> {
         // #01 Initialize
         // #01 Initialize NbtTag content
         let mut tag_id;
@@ -600,6 +607,7 @@ impl NbtData {
 
             new_nbt_tag.set_position(new_tag_position.clone());
             self.tags.push(new_nbt_tag.clone());
+            self.tags_map.insert(new_nbt_tag.name().to_string(), new_tag_position.index());
             self.add_child_to_parent(&new_nbt_tag, nbt_parent_index);
 
             self.nbt_parser.increment_index();
