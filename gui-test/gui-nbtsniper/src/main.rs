@@ -50,8 +50,17 @@ fn Home() -> Element {
             "Go to blog"
         }
         div {
-            h1 { "Hex Dump" }
-            pre { "{hex_dump}" }
+            h1 { "Hex Dump" },
+            pre { 
+                onmouseenter: move |_event| { let on_text = true; },
+                onmouseleave: move |_event| { let on_text = false; },
+                style: "color: red ; font-weight: bold",
+                //style: "color: {} ; font-weight: {}",
+                //if on_text { "red" } else { "black" },
+                //if on_text { "bold" } else { "normal" },
+
+                "{hex_dump}"    
+            }
             
         }
     }
