@@ -42,6 +42,9 @@ fn Home() -> Element {
     let mc_bin = nbtsniper::NbtFile::read("../../tests/files/bigtest.nbt".to_string());
     let hex_dump = use_signal(|| mc_bin.hex_dump());
 
+    let mut hovered = use_signal(|| false);
+
+
     rsx! {
         Link {
             to: Route::Blog {
@@ -52,9 +55,9 @@ fn Home() -> Element {
         div {
             h1 { "Hex Dump" },
             pre { 
-                onmouseenter: move |_event| { let on_text = true; },
-                onmouseleave: move |_event| { let on_text = false; },
-                style: "color: red ; font-weight: bold",
+                onmouseenter: move |_event| { hovered.set(true); },
+                onmouseleave: move |_event| { hovered.set(false) },
+                color: if hovered() { "red" } else { "black"},
                 //style: "color: {} ; font-weight: {}",
                 //if on_text { "red" } else { "black" },
                 //if on_text { "bold" } else { "normal" },
