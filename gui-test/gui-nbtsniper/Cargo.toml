@@ -1,0 +1,15 @@
+[package]
+name = "gui-nbtsniper"
+version = "0.1.0"
+authors = ["mrmarkolinus <72712091+mrmarkolinus@users.noreply.github.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nbtsniper = { path = "../../../nbt-sniper" }
+
+dioxus = { version = "0.5", features = ["desktop", "router"] }
+
+# Debug
+dioxus-logger = "0.5.1"
