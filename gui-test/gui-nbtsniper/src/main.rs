@@ -2,6 +2,7 @@
 
 use dioxus::prelude::*;
 use dioxus_logger::tracing::{info, Level};
+use nbtsniper;
 
 #[derive(Clone, Routable, Debug, PartialEq)]
 enum Route {
@@ -37,6 +38,9 @@ fn Blog(id: i32) -> Element {
 #[component]
 fn Home() -> Element {
     let mut count = use_signal(|| 0);
+    
+    let mc_bin = nbtsniper::NbtFile::read("../../tests/files/bigtest.nbt".to_string());
+    let hex_dump = use_signal(|| mc_bin.hex_dump());
 
     rsx! {
         Link {
@@ -46,9 +50,9 @@ fn Home() -> Element {
             "Go to blog"
         }
         div {
-            h1 { "High-Five counter: {count}" }
-            button { onclick: move |_| count += 1, "Up high!" }
-            button { onclick: move |_| count -= 1, "Down low!" }
+            h1 { "Hex Dump" }
+            pre { "{hex_dump}" }
+            
         }
     }
 }

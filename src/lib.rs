@@ -5,6 +5,7 @@ use std::io::BufReader;
 use std::io::Read;
 use thiserror::Error;
 use std::collections::HashMap;
+use std::fmt::Write;
 
 pub mod nbt;
 
@@ -73,8 +74,8 @@ impl NbtFile {
         }
     }
 
-    pub fn dump_hex(&self) {
-        Self::format_output_raw(self.nbtdata.raw_bytes(), 0);
+    pub fn hex_dump(&self) -> String{
+        Self::format_output_raw(self.nbtdata.raw_bytes(), 0)
     }
 
     fn display_tag(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
@@ -164,29 +165,34 @@ impl NbtFile {
         Self::format_output_raw(dump_hex, nbttag.position().depth());
     }
 
-    fn format_output_raw(rawbytes: &[u8], depth: i64) {
+    fn format_output_raw(rawbytes: &[u8], depth: i64) -> String {
+
+        let mut output = String::new();
+
         for _ in 0..depth {
-            print!("   ");
+            write!(output, "   ");
         }
 
         for i in 0..rawbytes.len() {
             let byte = rawbytes[i];
             // Print a space every 4 bytes for grouping
             if i % 4 == 0 && i % 32 != 0 {
-                print!(" ");
+                write!(output," ");
             }
             // Print a new line every 16 bytes
             if i % 32 == 0 && i != 0 {
                 println!();
                 for _ in 0..depth {
-                    print!("   ");
+                    write!(output,"   ");
                 }
             }
             // Print the byte as hex
-            print!("{:02X} ", byte);
+            write!(output,"{:02X} ", byte);
         }
         // Print a final new line
-        println!();
+        writeln!(output);
+
+        output
     }
 
     pub fn to_json(&self, output_path: &str) -> Result<(), NbtFileError> {

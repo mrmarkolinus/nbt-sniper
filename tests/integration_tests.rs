@@ -16,7 +16,7 @@ fn bigtest() {
     println!("");
     println!("-------------------------");
     println!("Raw data using dump_hex() method");
-    mc_bin.dump_hex();
+    print!("{}\n", mc_bin.hex_dump());
 
     println!("");
     println!("-------------------------");
