@@ -179,11 +179,11 @@ impl NbtFile {
             if i % 4 == 0 && i % 32 != 0 {
                 write!(output," ");
             }
-            // Print a new line every 16 bytes
+            // Print a new line every 32 bytes
             if i % 32 == 0 && i != 0 {
-                println!();
+                writeln!(output);
                 for _ in 0..depth {
-                    write!(output,"   ");
+                    writeln!(output,"   ");
                 }
             }
             // Print the byte as hex
