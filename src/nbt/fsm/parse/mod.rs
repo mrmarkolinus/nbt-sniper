@@ -1,5 +1,4 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use core::panic;
 use std::io::Cursor;
 
 use crate::nbt;
