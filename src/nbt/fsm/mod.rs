@@ -130,29 +130,27 @@ impl NbtParser {
     // Delegating NbtListParser methods to NbtParser
 
     pub fn set_list_tag_id(&mut self, tag_id: nbt::NbtTagId) {
-        self.list_parser.list_tag_id = tag_id;
+        self.list_parser.set_id(tag_id);
     }
 
     pub fn list_tag_id(&self) -> &nbt::NbtTagId {
-        &self.list_parser.list_tag_id
+        &self.list_parser.tag_id()
     }
 
     pub fn set_list_len(&mut self, len: i32) {
-        self.list_parser.list_len = len;
+        self.list_parser.set_len(len);
     }
 
     pub fn increment_list_index(&mut self) {
-        self.list_parser.list_elem_count = self.list_parser.list_elem_count + 1;
+        self.list_parser.increment();
     }
 
     pub fn reset_list(&mut self) {
-        self.list_parser.list_tag_id = nbt::NbtTagId::End;
-        self.list_parser.list_len = 0;
-        self.list_parser.list_elem_count = 0;
+        self.list_parser.reset();
     }
 
     pub fn is_list_end(&self) -> bool {
-        self.list_parser.list_elem_count >= self.list_parser.list_len - 1
+        self.list_parser.is_end()
     }
 
 }
