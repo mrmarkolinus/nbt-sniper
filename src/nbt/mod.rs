@@ -504,14 +504,14 @@ impl NbtData {
         let mut nbt_parent_index = 0;
         let mut depth_delta = 0;
 
-        // #02 Parse the Nbt binary file and build the NbtTag tree
         cursor.seek(SeekFrom::Start(0)).unwrap();
         loop {
-            // set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
+            // #02 Reinit the loop for a new NbtTag
+            // #021 set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
             nbt_parent_index = self.update_nbttree_depth(nbt_parent_index, depth_delta)?;
             depth_delta = 0;
 
-            // reset the NbtTag information and start parsing a new NbtTag
+            // #022 reset the NbtTag information and start parsing a new NbtTag
             new_nbt_tag.set_name("".to_string());
             new_nbt_tag.set_value(NbtTagType::End(None));
 
@@ -519,31 +519,15 @@ impl NbtData {
             new_tag_position.set_byte_start_all(cursor.position() as usize);
             new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
 
+            // #03 Start parsing a new NbtTag
             match self.nbt_parser.state() {
                 fsm::ParseNbtFsmState::Normal => {
-                    tag_id = self.parse_nbt_tag_id(&mut new_tag_position, &mut cursor)?;
-
-                    if let NbtTagId::End = tag_id {
-                        depth_delta = self.exit_nbttag_compound(nbt_parent_index);
-                    } else {
-                        self.parse_nbt_tag_name_and_value(
-                            &mut new_nbt_tag,
-                            &mut new_tag_position,
-                            tag_id,
-                            &mut cursor,
-                        )?;
-
-                        if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
-                            self.nbt_parser.set_list_tag_id(list_elem_tag_ids.0);
-                            self.nbt_parser.set_list_len(list_elem_tag_ids.1);
-                            self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
-                            depth_delta += 1;
-                        }
-
-                        if let NbtTagId::Compound = tag_id {
-                            depth_delta += 1;
-                        }
-                    }
+                    depth_delta = self.parse_normal_state(
+                        &mut new_nbt_tag,
+                        &mut new_tag_position,
+                        nbt_parent_index,
+                        &mut cursor,
+                    )?;
                 }
 
                 fsm::ParseNbtFsmState::List => {
@@ -608,6 +592,37 @@ impl NbtData {
         }
 
         Ok(())
+    }
+
+    fn parse_normal_state(
+        &mut self,
+        new_nbt_tag: &mut NbtTag,
+        new_tag_position: &mut NbtTagPosition,
+        nbt_parent_index: usize,
+        cursor: &mut Cursor<Vec<u8>>,
+    ) -> Result<i64, NbtReadError> {
+        let mut depth_delta = 0;
+
+        let tag_id = self.parse_nbt_tag_id(new_tag_position, cursor)?;
+
+        if let NbtTagId::End = tag_id {
+            depth_delta = self.exit_nbttag_compound(nbt_parent_index);
+        } else {
+            self.parse_nbt_tag_name_and_value(new_nbt_tag, new_tag_position, tag_id, cursor)?;
+
+            if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
+                self.nbt_parser.set_list_tag_id(list_elem_tag_ids.0);
+                self.nbt_parser.set_list_len(list_elem_tag_ids.1);
+                self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
+                depth_delta += 1;
+            }
+
+            if let NbtTagId::Compound = tag_id {
+                depth_delta += 1;
+            }
+        }
+
+        Ok(depth_delta)
     }
 
     fn parse_nbt_tag_id(
