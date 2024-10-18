@@ -2,6 +2,11 @@
 name = "nbtsniper"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "read, write and inspect all kind of NBT files"
+repository = "https://github.com/mrmarkolinus/nbt-sniper"
+readme = "README.md"
+
 
 [dependencies]
 byteorder = "1.3"

@@ -170,27 +170,27 @@ impl NbtFile {
         let mut output = String::new();
 
         for _ in 0..depth {
-            write!(output, "   ");
+            _ = write!(output, "   ");
         }
 
         for i in 0..rawbytes.len() {
             let byte = rawbytes[i];
             // Print a space every 4 bytes for grouping
             if i % 4 == 0 && i % 32 != 0 {
-                write!(output," ");
+                _ = write!(output," ");
             }
             // Print a new line every 32 bytes
             if i % 32 == 0 && i != 0 {
-                writeln!(output);
+                _ = writeln!(output);
                 for _ in 0..depth {
-                    writeln!(output,"   ");
+                    _ = writeln!(output,"   ");
                 }
             }
             // Print the byte as hex
-            write!(output,"{:02X} ", byte);
+            _ = write!(output,"{:02X} ", byte);
         }
         // Print a final new line
-        writeln!(output);
+        _ = writeln!(output);
 
         output
     }
