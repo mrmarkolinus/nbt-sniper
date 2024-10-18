@@ -490,7 +490,6 @@ impl NbtData {
     pub fn parse(&mut self) -> Result<(), NbtReadError> {
         // #01 Initialize
         // #01 Initialize NbtTag content
-        let mut tag_id;
         let mut new_tag_position = NbtTagPosition::new();
         let mut new_nbt_tag = NbtTag {
             name: "".to_string(),
@@ -531,7 +530,14 @@ impl NbtData {
                 }
 
                 fsm::ParseNbtFsmState::List => {
-                    tag_id = *self.nbt_parser.list_tag_id();
+
+                    depth_delta = self.parse_list_state(
+                        &mut new_nbt_tag,
+                        &mut new_tag_position,
+                        &mut cursor,
+                    )?; 
+
+                    /* tag_id = *self.nbt_parser.list_tag_id();
                     new_nbt_tag.set_name("".to_string());
 
                     new_tag_position.set_byte_start_value(cursor.position() as usize);
@@ -564,7 +570,7 @@ impl NbtData {
                                 .change_state_to(fsm::ParseNbtFsmState::Normal);
                             self.nbt_parser.switch_list_ctx();
                         }
-                    }
+                    }  */
                 }
 
                 fsm::ParseNbtFsmState::EndOfFile => {
@@ -592,6 +598,53 @@ impl NbtData {
         }
 
         Ok(())
+    }
+
+
+    fn parse_list_state(
+        &mut self,
+        new_nbt_tag: &mut NbtTag,
+        new_tag_position: &mut NbtTagPosition,
+        cursor: &mut Cursor<Vec<u8>>,
+    ) -> Result<i64, NbtReadError> {
+        
+        let mut depth_delta = 0;
+        let tag_id = *self.nbt_parser.list_tag_id();
+        new_nbt_tag.set_name("".to_string());
+
+        new_tag_position.set_byte_start_value(cursor.position() as usize);
+        new_nbt_tag.set_value(fsm::parse::nbt_tag(cursor, &tag_id)?);
+        new_tag_position.set_byte_end_value(cursor.position() as usize);
+
+        if self.nbt_parser.is_list_end() {
+            self.nbt_parser
+                .change_state_to(fsm::ParseNbtFsmState::Normal);
+            self.nbt_parser.reset_list();
+
+            if let NbtTagId::Compound = tag_id {
+                depth_delta += 1;
+                // if we are in a list of compound, we need to exist the list parser and go back to normal
+                // the list is finished, so we do not need to store the list parser status
+                self.nbt_parser
+                    .change_state_to(fsm::ParseNbtFsmState::Normal);
+            } else {
+                depth_delta -= 1
+            }
+        } else {
+            self.nbt_parser.increment_list_index();
+
+            if let NbtTagId::Compound = tag_id {
+                depth_delta += 1;
+
+                // if we are in a list of compound, we need to exist the list parser and go back to normal
+                // but we also need to store the point in the list were we are
+                self.nbt_parser
+                    .change_state_to(fsm::ParseNbtFsmState::Normal);
+                self.nbt_parser.switch_list_ctx();
+            }
+        }
+
+        Ok(depth_delta)
     }
 
     fn parse_normal_state(
