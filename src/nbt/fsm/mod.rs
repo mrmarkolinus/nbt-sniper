@@ -106,7 +106,7 @@ impl NbtParser {
         self.index = self.index + 1;
     }
 
-    pub fn store_list_ctx(&mut self) {
+    pub fn switch_list_ctx(&mut self) {
         let list_parser = self.list_parser.clone();
         self.unfinished_lists.push(list_parser);
         self.list_parser.reset();

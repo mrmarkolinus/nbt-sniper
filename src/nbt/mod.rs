@@ -607,7 +607,7 @@ impl NbtData {
                             // if we are in a list of compound, we need to exist the list parser and go back to normal
                             // but we also need to store the point in the list were we are
                             self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
-                            self.nbt_parser.store_list_ctx();
+                            self.nbt_parser.switch_list_ctx();
                         }
                     }
                 }
