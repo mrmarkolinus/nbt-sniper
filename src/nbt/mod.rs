@@ -131,37 +131,27 @@ struct NbtTagPositionRawBytes {
     byte_end_all_with_children: usize,
     byte_start_id: usize,
     byte_end_id: usize,
-    byte_start_name: usize,
-    byte_end_name: usize,
-    byte_start_value: usize,
-    byte_end_value: usize,
+    byte_start_name: Option<usize>,
+    byte_end_name: Option<usize>,
+    byte_start_value: Option<usize>,
+    byte_end_value: Option<usize>,
 }
 
 impl NbtTagPositionRawBytes {
     pub fn new() -> NbtTagPositionRawBytes {
-        NbtTagPositionRawBytes {
-            byte_start_all: 0,
-            byte_end_all: 0,
-            byte_end_all_with_children: 0,
-            byte_start_id: 0,
-            byte_end_id: 0,
-            byte_start_name: 0,
-            byte_end_name: 0,
-            byte_start_value: 0,
-            byte_end_value: 0,
-        }
+        NbtTagPositionRawBytes::default()
     }
-
+    
     pub fn reset(&mut self) {
         self.byte_start_all = 0;
         self.byte_end_all = 0;
         self.byte_end_all_with_children = 0;
         self.byte_start_id = 0;
         self.byte_end_id = 0;
-        self.byte_start_name = 0;
-        self.byte_end_name = 0;
-        self.byte_start_value = 0;
-        self.byte_end_value = 0;
+        self.byte_start_name = None;
+        self.byte_end_name = None;
+        self.byte_start_value = None;
+        self.byte_end_value = None;
     }
 
     pub fn byte_start_all(&self) -> usize {
@@ -184,19 +174,19 @@ impl NbtTagPositionRawBytes {
         self.byte_end_id
     }
 
-    pub fn byte_start_name(&self) -> usize {
+    pub fn byte_start_name(&self) -> Option<usize> {
         self.byte_start_name
     }
 
-    pub fn byte_end_name(&self) -> usize {
+    pub fn byte_end_name(&self) -> Option<usize> {
         self.byte_end_name
     }
 
-    pub fn byte_start_value(&self) -> usize {
+    pub fn byte_start_value(&self) -> Option<usize> {
         self.byte_start_value
     }
 
-    pub fn byte_end_value(&self) -> usize {
+    pub fn byte_end_value(&self) -> Option<usize> {
         self.byte_end_value
     }
 
@@ -221,19 +211,19 @@ impl NbtTagPositionRawBytes {
     }
 
     pub fn set_byte_start_name(&mut self, byte_start_name: usize) {
-        self.byte_start_name = byte_start_name;
+        self.byte_start_name = Some(byte_start_name);
     }
 
     pub fn set_byte_end_name(&mut self, byte_end_name: usize) {
-        self.byte_end_name = byte_end_name;
+        self.byte_end_name = Some(byte_end_name);
     }
 
     pub fn set_byte_start_value(&mut self, byte_start_value: usize) {
-        self.byte_start_value = byte_start_value;
+        self.byte_start_value = Some(byte_start_value);
     }
 
     pub fn set_byte_end_value(&mut self, byte_end_value: usize) {
-        self.byte_end_value = byte_end_value;
+        self.byte_end_value = Some(byte_end_value);
     }
 }
 
@@ -285,19 +275,19 @@ impl NbtTagPosition {
         self.raw_bytes.byte_end_id()
     }
 
-    pub fn byte_start_name(&self) -> usize {
+    pub fn byte_start_name(&self) -> Option<usize> {
         self.raw_bytes.byte_start_name()
     }
 
-    pub fn byte_end_name(&self) -> usize {
+    pub fn byte_end_name(&self) -> Option<usize> {
         self.raw_bytes.byte_end_name()
     }
 
-    pub fn byte_start_value(&self) -> usize {
+    pub fn byte_start_value(&self) -> Option<usize> {
         self.raw_bytes.byte_start_value()
     }
 
-    pub fn byte_end_value(&self) -> usize {
+    pub fn byte_end_value(&self) -> Option<usize> {
         self.raw_bytes.byte_end_value()
     }
 
@@ -496,22 +486,7 @@ impl NbtData {
     pub fn tags_map(&self) -> &HashMap<String, usize> {
         &self.tags_map
     }
-
-    fn update_nbttree_depth(
-        &mut self,
-        nbt_parent_index: usize,
-        depth_delta: i64,
-    ) -> Result<usize, NbtReadError> {
-        
-        let new_parent_index;
-
-        self.nbt_parser
-            .set_tree_depth(self.nbt_parser.tree_depth() + depth_delta);
-        new_parent_index = self.set_new_parent_index(depth_delta, nbt_parent_index)?;
-
-        Ok(new_parent_index)
-    }
-
+    
     pub fn parse(&mut self) -> Result<(), NbtReadError> {
         // #01 Initialize
         // #01 Initialize NbtTag content
@@ -535,21 +510,18 @@ impl NbtData {
             // set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
             nbt_parent_index = self.update_nbttree_depth(nbt_parent_index, depth_delta)?;
             depth_delta = 0;
-            /* self.nbt_parser
-                .set_tree_depth(self.nbt_parser.tree_depth() + depth_delta);
-            self.set_new_parent_index(depth_delta, &mut nbt_parent_index)?;
-            depth_delta = 0; */
 
             // reset the NbtTag information and start parsing a new NbtTag
             new_nbt_tag.set_name("".to_string());
             new_nbt_tag.set_value(NbtTagType::End(None));
 
+            new_tag_position.reset();
             new_tag_position.set_byte_start_all(cursor.position() as usize);
             new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
 
-            new_tag_position.set_index(0);
-            new_tag_position.set_depth(0);
-            new_tag_position.set_parent(0);
+            //new_tag_position.set_index(0);
+            //new_tag_position.set_depth(0);
+            //new_tag_position.set_parent(0);
 
             match self.nbt_parser.state() {
                 fsm::ParseNbtFsmState::Normal => {
@@ -651,6 +623,22 @@ impl NbtData {
 
         Ok(())
     }
+
+    fn update_nbttree_depth(
+        &mut self,
+        nbt_parent_index: usize,
+        depth_delta: i64,
+    ) -> Result<usize, NbtReadError> {
+        
+        let new_parent_index;
+
+        self.nbt_parser
+            .set_tree_depth(self.nbt_parser.tree_depth() + depth_delta);
+        new_parent_index = self.set_new_parent_index(depth_delta, nbt_parent_index)?;
+
+        Ok(new_parent_index)
+    }
+
 
     fn add_child_to_parent(&mut self, new_nbt_tag: &NbtTag, nbt_parent_index: usize) {
         let child_index = new_nbt_tag.position().index();

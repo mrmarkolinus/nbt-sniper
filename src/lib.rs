@@ -118,45 +118,67 @@ impl NbtFile {
         );
         print!(
             "Name[{}:{}] ",
-            nbttag.position().byte_start_name(),
-            nbttag.position().byte_end_name()
+            match nbttag.position().byte_start_name() {
+                Some(x) => x.to_string(),
+                None => "N/A".to_string() 
+            },
+            match nbttag.position().byte_end_name() {
+                Some(x) => x.to_string(),
+                None => "N/A".to_string()  
+            }
         );
 
-        let byte_start;
-        let byte_end;
+        let mut byte_start= 0;
+        let mut byte_end= 0;
         let byte_start_dump;
         let byte_end_dump;
 
         match nbttag.value() {
             nbt::NbtTagType::Compound(_x) => {
-                byte_start = nbttag.position().byte_start_value();
+                if let Some(x) = nbttag.position().byte_start_value() {
+                    byte_start = x;
+                }
                 byte_end = nbttag.position().byte_end_all_with_children();
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
+
+                println!("Value[{}:{}]", byte_start, byte_end);
             }
             nbt::NbtTagType::List(_x) => {
-                byte_start = nbttag.position().byte_start_value();
+                if let Some(x) = nbttag.position().byte_start_value() {
+                    byte_start = x;
+                }
                 byte_end = nbttag.position().byte_end_all_with_children();
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
+
+                println!("Value[{}:{}]", byte_start, byte_end);
             }
             nbt::NbtTagType::End(_x) => {
-                byte_start = nbttag.position().byte_start_value();
-                byte_end = nbttag.position().byte_end_value();
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
+
+                println!("Value[{}:{}]", "N/A", "N/A");
             }
             _ => {
-                byte_start = nbttag.position().byte_start_value();
-                byte_end = nbttag.position().byte_end_value();
+                if let Some(x) = nbttag.position().byte_start_value() {
+                    byte_start = x;
+                }
+
+                if let Some(x) = nbttag.position().byte_end_value() {
+                    byte_end = x;
+                }
+
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
+
+                println!("Value[{}:{}]", byte_start, byte_end);
             }
         }
 
         let dump_hex = &rawbytes[byte_start_dump..byte_end_dump];
 
-        println!("Value[{}:{}]", byte_start, byte_end);
+        
 
         for _ in 0..nbttag.position().depth() {
             print!("   ");
