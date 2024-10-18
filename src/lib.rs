@@ -120,16 +120,16 @@ impl NbtFile {
             "Name[{}:{}] ",
             match nbttag.position().byte_start_name() {
                 Some(x) => x.to_string(),
-                None => "N/A".to_string() 
+                None => "N/A".to_string(),
             },
             match nbttag.position().byte_end_name() {
                 Some(x) => x.to_string(),
-                None => "N/A".to_string()  
+                None => "N/A".to_string(),
             }
         );
 
-        let mut byte_start= 0;
-        let mut byte_end= 0;
+        let mut byte_start = 0;
+        let mut byte_end = 0;
         let byte_start_dump;
         let byte_end_dump;
 
@@ -177,8 +177,6 @@ impl NbtFile {
         }
 
         let dump_hex = &rawbytes[byte_start_dump..byte_end_dump];
-
-        
 
         for _ in 0..nbttag.position().depth() {
             print!("   ");
