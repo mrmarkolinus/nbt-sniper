@@ -1,10 +1,15 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::io;
 use std::io::{Cursor, Seek, SeekFrom};
 use thiserror::Error;
-use std::collections::HashMap;
 
 mod fsm;
+
+const MAX_LIST_LENGTH: i32 = 32767;
+const MAX_BYTE_ARRAY_LENGTH: i32 = 32767;
+const MAX_INT_ARRAY_LENGTH: i32 = 32767;
+const MAX_LONG_ARRAY_LENGTH: i32 = 32767;
 
 #[cfg(test)]
 mod tests;
@@ -19,6 +24,18 @@ pub enum NbtReadError {
 
     #[error("Invalid NBT Tree Depth")]
     InvalidNbtDepth, // Custom error for tag id validation
+
+    #[error("Invalid NBT List lenght")]
+    InvalidNbtListLenght, // if list is longer than MAX_LIST_LENGTH
+
+    #[error("Invalid NBT ByteArray lenght")]
+    InvalidNbtByteArrayLenght, // if array is longer than MAX_BYTE_ARRAY_LENGTH
+
+    #[error("Invalid NBT IntArray lenght")]
+    InvalidNbtIntArrayLenght, // if array is longer than MAX_BYTE_ARRAY_LENGTH
+
+    #[error("Invalid NBT LongArray lenght")]
+    InvalidNbtLongArrayLenght, // if array is longer than MAX_BYTE_ARRAY_LENGTH
 }
 
 #[derive(
@@ -607,7 +624,8 @@ impl NbtData {
 
             new_nbt_tag.set_position(new_tag_position.clone());
             self.tags.push(new_nbt_tag.clone());
-            self.tags_map.insert(new_nbt_tag.name().to_string(), new_tag_position.index());
+            self.tags_map
+                .insert(new_nbt_tag.name().to_string(), new_tag_position.index());
             self.add_child_to_parent(&new_nbt_tag, nbt_parent_index);
 
             self.nbt_parser.increment_index();

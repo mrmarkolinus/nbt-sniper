@@ -1,11 +1,11 @@
 use flate2::read::GzDecoder;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
 use thiserror::Error;
-use std::collections::HashMap;
-use std::fmt::Write;
 
 pub mod nbt;
 
@@ -74,7 +74,7 @@ impl NbtFile {
         }
     }
 
-    pub fn hex_dump(&self) -> String{
+    pub fn hex_dump(&self) -> String {
         Self::format_output_raw(self.nbtdata.raw_bytes(), 0)
     }
 
@@ -166,7 +166,6 @@ impl NbtFile {
     }
 
     fn format_output_raw(rawbytes: &[u8], depth: i64) -> String {
-
         let mut output = String::new();
 
         for _ in 0..depth {
@@ -177,17 +176,17 @@ impl NbtFile {
             let byte = rawbytes[i];
             // Print a space every 4 bytes for grouping
             if i % 4 == 0 && i % 32 != 0 {
-                _ = write!(output," ");
+                _ = write!(output, " ");
             }
             // Print a new line every 32 bytes
             if i % 32 == 0 && i != 0 {
                 _ = writeln!(output);
                 for _ in 0..depth {
-                    _ = writeln!(output,"   ");
+                    _ = writeln!(output, "   ");
                 }
             }
             // Print the byte as hex
-            _ = write!(output,"{:02X} ", byte);
+            _ = write!(output, "{:02X} ", byte);
         }
         // Print a final new line
         _ = writeln!(output);

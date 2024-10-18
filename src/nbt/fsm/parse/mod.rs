@@ -93,8 +93,8 @@ pub fn nbt_tag(
                 Err(e) => return Err(nbt::NbtReadError::Io(e)),
             };
 
-            if len > 65_536 {
-                //TODO error handling
+            if len > nbt::MAX_BYTE_ARRAY_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtByteArrayLenght);
             }
 
             let mut buf = Vec::with_capacity(len as usize);
@@ -125,9 +125,8 @@ pub fn nbt_tag(
             };
 
             let len = cursor.read_i32::<BigEndian>()?;
-            if len > 65_536 {
-                //TODO error handling
-                panic!("List length is too large");
+            if len > nbt::MAX_LIST_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtListLenght);
             }
             nbt::NbtTagType::List((list_elem_tag_ids, len))
         }
@@ -136,9 +135,8 @@ pub fn nbt_tag(
 
         nbt::NbtTagId::IntArray => {
             let len = cursor.read_i32::<BigEndian>()?;
-            if len > 65_536 {
-                //TODO error handling
-                panic!("Array length is too large");
+            if len > nbt::MAX_INT_ARRAY_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtIntArrayLenght);
             }
 
             let mut buf = Vec::with_capacity(len as usize);
@@ -151,9 +149,8 @@ pub fn nbt_tag(
         }
         nbt::NbtTagId::LongArray => {
             let len = cursor.read_i32::<BigEndian>()?;
-            if len > 65_536 {
-                //TODO error handling
-                panic!("Array length is too large");
+            if len > nbt::MAX_LONG_ARRAY_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtLongArrayLenght);
             }
 
             let mut buf = Vec::with_capacity(len as usize);

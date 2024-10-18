@@ -3,11 +3,11 @@ use nbtsniper::NbtFile;
 #[test]
 fn bigtest() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
-    
+
     println!("-------------------------");
     println!("Debug Output");
     mc_bin.format_output();
-    
+
     println!("");
     println!("-------------------------");
     println!("Printing JSON to file");
