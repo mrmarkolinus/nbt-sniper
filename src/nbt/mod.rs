@@ -542,7 +542,7 @@ impl NbtData {
             new_tag_position.set_parent(0);
 
             match self.nbt_parser.state() {
-                fsm::ParseNbtFsm::Normal => {
+                fsm::ParseNbtFsmState::Normal => {
                     //(tag_id, tag_name, tag_value, depth_delta) = parse_tag_id_name_and_value(test_sequence, nbt_parser, &mut unfinished_lists, nbt_parent_index)?;
                     new_tag_position.set_byte_start_id(cursor.position() as usize);
                     tag_id = match fsm::parse::nbt_tag_id(&mut cursor) {
@@ -568,7 +568,7 @@ impl NbtData {
                         if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
                             self.nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
                             self.nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
-                            self.nbt_parser.change_state_to(fsm::ParseNbtFsm::List);
+                            self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
                             depth_delta += 1;
                         }
 
@@ -578,7 +578,7 @@ impl NbtData {
                     }
                 }
 
-                fsm::ParseNbtFsm::List => {
+                fsm::ParseNbtFsmState::List => {
                     tag_id = *self.nbt_parser.list_parser.tag_id();
                     new_nbt_tag.set_name("".to_string());
 
@@ -587,14 +587,14 @@ impl NbtData {
                     new_tag_position.set_byte_end_value(cursor.position() as usize);
 
                     if self.nbt_parser.list_parser.is_end() {
-                        self.nbt_parser.change_state_to(fsm::ParseNbtFsm::Normal);
+                        self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
                         self.nbt_parser.list_parser.reset();
 
                         if let NbtTagId::Compound = tag_id {
                             depth_delta += 1;
                             // if we are in a list of compound, we need to exist the list parser and go back to normal
                             // the list is finished, so we do not need to store the list parser status
-                            self.nbt_parser.change_state_to(fsm::ParseNbtFsm::Normal);
+                            self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
                         } else {
                             depth_delta -= 1
                         }
@@ -606,13 +606,13 @@ impl NbtData {
 
                             // if we are in a list of compound, we need to exist the list parser and go back to normal
                             // but we also need to store the point in the list were we are
-                            self.nbt_parser.change_state_to(fsm::ParseNbtFsm::Normal);
+                            self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
                             self.store_list_ctx();
                         }
                     }
                 }
 
-                fsm::ParseNbtFsm::EndOfFile => {
+                fsm::ParseNbtFsmState::EndOfFile => {
                     break;
                 }
             }
@@ -630,7 +630,7 @@ impl NbtData {
 
             self.nbt_parser.increment_index();
             if new_nbt_tag.position().byte_end_all() >= total_bytes {
-                self.nbt_parser.change_state_to(fsm::ParseNbtFsm::EndOfFile);
+                self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::EndOfFile);
                 break; //TODO Remove
             }
         }
@@ -719,7 +719,7 @@ impl NbtData {
         match gp_nbt_tag {
             NbtTagType::List(_) => {
                 if self.restore_list_ctx() {
-                    self.nbt_parser.change_state_to(fsm::ParseNbtFsm::List);
+                    self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
                 } else {
                     // only in this case we will have a depth_delta of -2 because
                     // compound is finished (=-1) and the list as well (=-1)
@@ -763,7 +763,7 @@ impl NbtData {
             if let nbt::NbtTagType::List(ref list_elem_tag_ids) = tag_value {
                 nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
                 nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
-                nbt_parser.change_state_to(ParseNbtFsm::List);
+                nbt_parser.change_state_to(ParseNbtFsmState::List);
                 depth_delta += 1;
             }
 

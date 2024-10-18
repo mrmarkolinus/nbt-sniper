@@ -5,7 +5,7 @@ use crate::nbt;
 pub mod parse;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
-pub enum ParseNbtFsm {
+pub enum ParseNbtFsmState {
     #[default]
     Normal,
     List,
@@ -57,7 +57,7 @@ impl NbtListParser {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub struct NbtParser {
-    state: ParseNbtFsm,
+    state: ParseNbtFsmState,
     pub list_parser: NbtListParser,
     pub unfinished_lists: Vec<NbtListParser>,
     //cursor: &'a mut Cursor<Vec<u8>>,
@@ -68,7 +68,7 @@ pub struct NbtParser {
 impl NbtParser {
     pub fn new() -> NbtParser {
         NbtParser {
-            state: ParseNbtFsm::default(),
+            state: ParseNbtFsmState::default(),
             list_parser: NbtListParser::new(),
             unfinished_lists: Vec::<NbtListParser>::new(),
             //cursor: cursor,
@@ -77,11 +77,11 @@ impl NbtParser {
         }
     }
 
-    pub fn change_state_to(&mut self, state: ParseNbtFsm) {
+    pub fn change_state_to(&mut self, state: ParseNbtFsmState) {
         self.state = state;
     }
 
-    pub fn state(&self) -> &ParseNbtFsm {
+    pub fn state(&self) -> &ParseNbtFsmState {
         &self.state
     }
 
@@ -231,7 +231,7 @@ mod tests {
     fn test_nbt_parser_new() {
         let parser = NbtParser::new();
         match parser.state {
-            ParseNbtFsm::Normal => (),
+            ParseNbtFsmState::Normal => (),
             _ => panic!("Initial state should be Normal"),
         }
         assert_eq!(parser.list_parser.list_tag_id, NbtTagId::End);
@@ -243,15 +243,15 @@ mod tests {
     #[test]
     fn test_nbt_parser_change_state_to() {
         let mut parser = NbtParser::new();
-        parser.change_state_to(ParseNbtFsm::List);
+        parser.change_state_to(ParseNbtFsmState::List);
         match parser.state {
-            ParseNbtFsm::List => (),
+            ParseNbtFsmState::List => (),
             _ => panic!("State should be List"),
         }
 
-        parser.change_state_to(ParseNbtFsm::EndOfFile);
+        parser.change_state_to(ParseNbtFsmState::EndOfFile);
         match parser.state {
-            ParseNbtFsm::EndOfFile => (),
+            ParseNbtFsmState::EndOfFile => (),
             _ => panic!("State should be EndOfFile"),
         }
     }
