@@ -13,7 +13,7 @@ pub enum ParseNbtFsmState {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
-pub struct NbtListParser {
+struct NbtListParser {
     list_tag_id: nbt::NbtTagId,
     list_len: i32,
     list_elem_count: i32,
@@ -53,6 +53,7 @@ impl NbtListParser {
     pub fn is_end(&self) -> bool {
         self.list_elem_count >= self.list_len - 1
     }
+
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
@@ -105,21 +106,55 @@ impl NbtParser {
         self.index = self.index + 1;
     }
 
-    pub fn list_parser(&mut self) -> &mut NbtListParser {
-        &mut self.list_parser
+    pub fn store_list_ctx(&mut self) {
+        let list_parser = self.list_parser.clone();
+        self.unfinished_lists.push(list_parser);
+        self.list_parser.reset();
     }
 
-    pub fn set_list_parser(&mut self, list_parser: NbtListParser) {
-        self.list_parser = list_parser;
+    pub fn restore_list_ctx(&mut self) -> bool {
+
+        match self.unfinished_lists.pop() {
+            //the list of compounds was not yet finished, restore the ctx
+            Some(previous_list_parser) => {
+                self.list_parser = previous_list_parser;
+                true
+            }
+            // the list of compounds was finished and we do not need to restore the ctx
+            // only in this case we will have a depth_delta of -2 because
+            // compound is finished (=-1) and the list as well (=-1)
+            None => false,
+        }
     }
 
-    pub fn unfinished_lists(&mut self) -> &mut Vec<NbtListParser> {
-        &mut self.unfinished_lists
+    // Delegating NbtListParser methods to NbtParser
+
+    pub fn set_list_tag_id(&mut self, tag_id: nbt::NbtTagId) {
+        self.list_parser.list_tag_id = tag_id;
     }
 
-    pub fn set_unfinished_lists(&mut self, unfinished_lists: Vec<NbtListParser>) {
-        self.unfinished_lists = unfinished_lists;
+    pub fn list_tag_id(&self) -> &nbt::NbtTagId {
+        &self.list_parser.list_tag_id
     }
+
+    pub fn set_list_len(&mut self, len: i32) {
+        self.list_parser.list_len = len;
+    }
+
+    pub fn increment_list_index(&mut self) {
+        self.list_parser.list_elem_count = self.list_parser.list_elem_count + 1;
+    }
+
+    pub fn reset_list(&mut self) {
+        self.list_parser.list_tag_id = nbt::NbtTagId::End;
+        self.list_parser.list_len = 0;
+        self.list_parser.list_elem_count = 0;
+    }
+
+    pub fn is_list_end(&self) -> bool {
+        self.list_parser.list_elem_count >= self.list_parser.list_len - 1
+    }
+
 }
 
 #[cfg(test)]

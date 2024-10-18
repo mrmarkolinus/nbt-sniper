@@ -566,8 +566,8 @@ impl NbtData {
                         new_tag_position.set_byte_end_value(cursor.position() as usize);
 
                         if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
-                            self.nbt_parser.list_parser().set_id(list_elem_tag_ids.0);
-                            self.nbt_parser.list_parser().set_len(list_elem_tag_ids.1);
+                            self.nbt_parser.set_list_tag_id(list_elem_tag_ids.0);
+                            self.nbt_parser.set_list_len(list_elem_tag_ids.1);
                             self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
                             depth_delta += 1;
                         }
@@ -579,16 +579,16 @@ impl NbtData {
                 }
 
                 fsm::ParseNbtFsmState::List => {
-                    tag_id = *self.nbt_parser.list_parser().tag_id();
+                    tag_id = *self.nbt_parser.list_tag_id();
                     new_nbt_tag.set_name("".to_string());
 
                     new_tag_position.set_byte_start_value(cursor.position() as usize);
                     new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
                     new_tag_position.set_byte_end_value(cursor.position() as usize);
 
-                    if self.nbt_parser.list_parser().is_end() {
+                    if self.nbt_parser.is_list_end() {
                         self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
-                        self.nbt_parser.list_parser().reset();
+                        self.nbt_parser.reset_list();
 
                         if let NbtTagId::Compound = tag_id {
                             depth_delta += 1;
@@ -599,7 +599,7 @@ impl NbtData {
                             depth_delta -= 1
                         }
                     } else {
-                        self.nbt_parser.list_parser().increment();
+                        self.nbt_parser.increment_list_index();
 
                         if let NbtTagId::Compound = tag_id {
                             depth_delta += 1;
@@ -607,7 +607,7 @@ impl NbtData {
                             // if we are in a list of compound, we need to exist the list parser and go back to normal
                             // but we also need to store the point in the list were we are
                             self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
-                            self.store_list_ctx();
+                            self.nbt_parser.store_list_ctx();
                         }
                     }
                 }
@@ -685,28 +685,6 @@ impl NbtData {
         Ok(())
     }
 
-    fn store_list_ctx(&mut self) {
-        let list_parser = self.nbt_parser.list_parser().clone();
-        self.nbt_parser.unfinished_lists().push(list_parser);
-        self.nbt_parser.list_parser().reset();
-    }
-
-    fn restore_list_ctx(&mut self) -> bool {
-        let unfinished_lists = self.nbt_parser.unfinished_lists();
-
-        match unfinished_lists.pop() {
-            //the list of compounds was not yet finished, restore the ctx
-            Some(previous_list_parser) => {
-                self.nbt_parser.set_list_parser(previous_list_parser);
-                true
-            }
-            // the list of compounds was finished and we do not need to restore the ctx
-            // only in this case we will have a depth_delta of -2 because
-            // compound is finished (=-1) and the list as well (=-1)
-            None => false,
-        }
-    }
-
     fn exit_nbttag_compound(&mut self, nbt_parent_index: usize) -> i64 {
         let mut depth_delta = -1;
 
@@ -718,7 +696,7 @@ impl NbtData {
 
         match gp_nbt_tag {
             NbtTagType::List(_) => {
-                if self.restore_list_ctx() {
+                if self.nbt_parser.restore_list_ctx() {
                     self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
                 } else {
                     // only in this case we will have a depth_delta of -2 because
