@@ -58,8 +58,8 @@ impl NbtListParser {
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub struct NbtParser {
     state: ParseNbtFsmState,
-    pub list_parser: NbtListParser,
-    pub unfinished_lists: Vec<NbtListParser>,
+    list_parser: NbtListParser,
+    unfinished_lists: Vec<NbtListParser>,
     //cursor: &'a mut Cursor<Vec<u8>>,
     index: usize,
     tree_depth: i64,
@@ -103,6 +103,22 @@ impl NbtParser {
 
     pub fn increment_index(&mut self) {
         self.index = self.index + 1;
+    }
+
+    pub fn list_parser(&mut self) -> &mut NbtListParser {
+        &mut self.list_parser
+    }
+
+    pub fn set_list_parser(&mut self, list_parser: NbtListParser) {
+        self.list_parser = list_parser;
+    }
+
+    pub fn unfinished_lists(&mut self) -> &mut Vec<NbtListParser> {
+        &mut self.unfinished_lists
+    }
+
+    pub fn set_unfinished_lists(&mut self, unfinished_lists: Vec<NbtListParser>) {
+        self.unfinished_lists = unfinished_lists;
     }
 }
 

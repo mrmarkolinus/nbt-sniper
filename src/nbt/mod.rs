@@ -566,8 +566,8 @@ impl NbtData {
                         new_tag_position.set_byte_end_value(cursor.position() as usize);
 
                         if let NbtTagType::List(ref list_elem_tag_ids) = new_nbt_tag.value() {
-                            self.nbt_parser.list_parser.set_id(list_elem_tag_ids.0);
-                            self.nbt_parser.list_parser.set_len(list_elem_tag_ids.1);
+                            self.nbt_parser.list_parser().set_id(list_elem_tag_ids.0);
+                            self.nbt_parser.list_parser().set_len(list_elem_tag_ids.1);
                             self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::List);
                             depth_delta += 1;
                         }
@@ -579,16 +579,16 @@ impl NbtData {
                 }
 
                 fsm::ParseNbtFsmState::List => {
-                    tag_id = *self.nbt_parser.list_parser.tag_id();
+                    tag_id = *self.nbt_parser.list_parser().tag_id();
                     new_nbt_tag.set_name("".to_string());
 
                     new_tag_position.set_byte_start_value(cursor.position() as usize);
                     new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
                     new_tag_position.set_byte_end_value(cursor.position() as usize);
 
-                    if self.nbt_parser.list_parser.is_end() {
+                    if self.nbt_parser.list_parser().is_end() {
                         self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
-                        self.nbt_parser.list_parser.reset();
+                        self.nbt_parser.list_parser().reset();
 
                         if let NbtTagId::Compound = tag_id {
                             depth_delta += 1;
@@ -599,7 +599,7 @@ impl NbtData {
                             depth_delta -= 1
                         }
                     } else {
-                        self.nbt_parser.list_parser.increment();
+                        self.nbt_parser.list_parser().increment();
 
                         if let NbtTagId::Compound = tag_id {
                             depth_delta += 1;
@@ -686,18 +686,18 @@ impl NbtData {
     }
 
     fn store_list_ctx(&mut self) {
-        let unfinished_lists = &mut self.nbt_parser.unfinished_lists;
-        unfinished_lists.push(self.nbt_parser.list_parser.clone());
-        self.nbt_parser.list_parser.reset();
+        let list_parser = self.nbt_parser.list_parser().clone();
+        self.nbt_parser.unfinished_lists().push(list_parser);
+        self.nbt_parser.list_parser().reset();
     }
 
     fn restore_list_ctx(&mut self) -> bool {
-        let unfinished_lists = &mut self.nbt_parser.unfinished_lists;
+        let unfinished_lists = self.nbt_parser.unfinished_lists();
 
         match unfinished_lists.pop() {
             //the list of compounds was not yet finished, restore the ctx
             Some(previous_list_parser) => {
-                self.nbt_parser.list_parser = previous_list_parser;
+                self.nbt_parser.set_list_parser(previous_list_parser);
                 true
             }
             // the list of compounds was finished and we do not need to restore the ctx
