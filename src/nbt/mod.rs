@@ -520,6 +520,7 @@ impl NbtData {
 
             // #03 Start parsing a new NbtTag
             match self.nbt_parser.state() {
+                // #031 ParseFSM is in normal state: we are parsing any NbtTag that is NOT a List child
                 fsm::ParseNbtFsmState::Normal => {
                     depth_delta = self.parse_normal_state(
                         &mut new_nbt_tag,
@@ -529,50 +530,16 @@ impl NbtData {
                     )?;
                 }
 
+                // #032 ParseFSM is in List state: NbtTag which are chidlrend ofLists NbtTags have no names and no values
                 fsm::ParseNbtFsmState::List => {
-
                     depth_delta = self.parse_list_state(
                         &mut new_nbt_tag,
                         &mut new_tag_position,
                         &mut cursor,
-                    )?; 
-
-                    /* tag_id = *self.nbt_parser.list_tag_id();
-                    new_nbt_tag.set_name("".to_string());
-
-                    new_tag_position.set_byte_start_value(cursor.position() as usize);
-                    new_nbt_tag.set_value(fsm::parse::nbt_tag(&mut cursor, &tag_id)?);
-                    new_tag_position.set_byte_end_value(cursor.position() as usize);
-
-                    if self.nbt_parser.is_list_end() {
-                        self.nbt_parser
-                            .change_state_to(fsm::ParseNbtFsmState::Normal);
-                        self.nbt_parser.reset_list();
-
-                        if let NbtTagId::Compound = tag_id {
-                            depth_delta += 1;
-                            // if we are in a list of compound, we need to exist the list parser and go back to normal
-                            // the list is finished, so we do not need to store the list parser status
-                            self.nbt_parser
-                                .change_state_to(fsm::ParseNbtFsmState::Normal);
-                        } else {
-                            depth_delta -= 1
-                        }
-                    } else {
-                        self.nbt_parser.increment_list_index();
-
-                        if let NbtTagId::Compound = tag_id {
-                            depth_delta += 1;
-
-                            // if we are in a list of compound, we need to exist the list parser and go back to normal
-                            // but we also need to store the point in the list were we are
-                            self.nbt_parser
-                                .change_state_to(fsm::ParseNbtFsmState::Normal);
-                            self.nbt_parser.switch_list_ctx();
-                        }
-                    }  */
+                    )?;
                 }
 
+                // #033 ParseFSM is in EndOfFile: there are no more bytes to read
                 fsm::ParseNbtFsmState::EndOfFile => {
                     break;
                 }
@@ -600,14 +567,12 @@ impl NbtData {
         Ok(())
     }
 
-
     fn parse_list_state(
         &mut self,
         new_nbt_tag: &mut NbtTag,
         new_tag_position: &mut NbtTagPosition,
         cursor: &mut Cursor<Vec<u8>>,
     ) -> Result<i64, NbtReadError> {
-        
         let mut depth_delta = 0;
         let tag_id = *self.nbt_parser.list_tag_id();
         new_nbt_tag.set_name("".to_string());
