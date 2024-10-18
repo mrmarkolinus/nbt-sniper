@@ -96,10 +96,10 @@ mod tests {
         assert_eq!(pos.byte_end_all_with_children(), 0);
         assert_eq!(pos.byte_start_id(), 0);
         assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
     }
 
     #[test]
@@ -120,10 +120,10 @@ mod tests {
         assert_eq!(pos.byte_end_all_with_children(), 30);
         assert_eq!(pos.byte_start_id(), 40);
         assert_eq!(pos.byte_end_id(), 50);
-        assert_eq!(pos.byte_start_name(), 60);
-        assert_eq!(pos.byte_end_name(), 70);
-        assert_eq!(pos.byte_start_value(), 80);
-        assert_eq!(pos.byte_end_value(), 90);
+        assert_eq!(pos.byte_start_name(), Some(60));
+        assert_eq!(pos.byte_end_name(), Some(70));
+        assert_eq!(pos.byte_start_value(), Some(80));
+        assert_eq!(pos.byte_end_value(), Some(90));
     }
 
     #[test]
@@ -146,10 +146,10 @@ mod tests {
         assert_eq!(pos.byte_end_all_with_children(), 0);
         assert_eq!(pos.byte_start_id(), 0);
         assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
     }
 
     // Tests for NbtTagPosition
@@ -161,10 +161,10 @@ mod tests {
         assert_eq!(pos.byte_end_all_with_children(), 0);
         assert_eq!(pos.byte_start_id(), 0);
         assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
         assert_eq!(pos.index(), 0);
         assert_eq!(pos.depth(), 0);
         assert_eq!(pos.parent(), 0);
@@ -192,10 +192,10 @@ mod tests {
         assert_eq!(pos.byte_end_all_with_children(), 300);
         assert_eq!(pos.byte_start_id(), 400);
         assert_eq!(pos.byte_end_id(), 500);
-        assert_eq!(pos.byte_start_name(), 600);
-        assert_eq!(pos.byte_end_name(), 700);
-        assert_eq!(pos.byte_start_value(), 800);
-        assert_eq!(pos.byte_end_value(), 900);
+        assert_eq!(pos.byte_start_name(), Some(600));
+        assert_eq!(pos.byte_end_name(), Some(700));
+        assert_eq!(pos.byte_start_value(), Some(800));
+        assert_eq!(pos.byte_end_value(), Some(900));
         assert_eq!(pos.index(), 1);
         assert_eq!(pos.depth(), 2);
         assert_eq!(pos.parent(), 3);
@@ -225,10 +225,10 @@ mod tests {
         assert_eq!(pos.byte_end_all_with_children(), 0);
         assert_eq!(pos.byte_start_id(), 0);
         assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
         assert_eq!(pos.index(), 0);
         assert_eq!(pos.depth(), 0);
         assert_eq!(pos.parent(), 0);

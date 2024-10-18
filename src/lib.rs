@@ -158,7 +158,7 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                println!("Value[{}:{}]", "N/A", "N/A");
+                println!("Value[{}]", "N/A");
             }
             _ => {
                 if let Some(x) = nbttag.position().byte_start_value() {
