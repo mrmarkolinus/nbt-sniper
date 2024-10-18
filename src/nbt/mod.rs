@@ -497,6 +497,21 @@ impl NbtData {
         &self.tags_map
     }
 
+    fn update_nbttree_depth(
+        &mut self,
+        nbt_parent_index: usize,
+        depth_delta: i64,
+    ) -> Result<usize, NbtReadError> {
+        
+        let new_parent_index;
+
+        self.nbt_parser
+            .set_tree_depth(self.nbt_parser.tree_depth() + depth_delta);
+        new_parent_index = self.set_new_parent_index(depth_delta, nbt_parent_index)?;
+
+        Ok(new_parent_index)
+    }
+
     pub fn parse(&mut self) -> Result<(), NbtReadError> {
         // #01 Initialize
         // #01 Initialize NbtTag content
@@ -518,10 +533,12 @@ impl NbtData {
         cursor.seek(SeekFrom::Start(0)).unwrap();
         loop {
             // set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
-            self.nbt_parser
+            nbt_parent_index = self.update_nbttree_depth(nbt_parent_index, depth_delta)?;
+            depth_delta = 0;
+            /* self.nbt_parser
                 .set_tree_depth(self.nbt_parser.tree_depth() + depth_delta);
             self.set_new_parent_index(depth_delta, &mut nbt_parent_index)?;
-            depth_delta = 0;
+            depth_delta = 0; */
 
             // reset the NbtTag information and start parsing a new NbtTag
             new_nbt_tag.set_name("".to_string());
@@ -529,13 +546,6 @@ impl NbtData {
 
             new_tag_position.set_byte_start_all(cursor.position() as usize);
             new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
-            /*  new_tag_position.set_byte_end_all_with_children(new_tag_position.byte_start_all());
-            new_tag_position.set_byte_start_id(new_tag_position.byte_start_all());
-            new_tag_position.set_byte_end_id(new_tag_position.byte_start_all());
-            new_tag_position.set_byte_start_name(new_tag_position.byte_start_all());
-            new_tag_position.set_byte_end_name(new_tag_position.byte_start_all());
-            new_tag_position.set_byte_start_value(new_tag_position.byte_start_all());
-            new_tag_position.set_byte_end_value(new_tag_position.byte_start_all()); */
 
             new_tag_position.set_index(0);
             new_tag_position.set_depth(0);
@@ -587,14 +597,16 @@ impl NbtData {
                     new_tag_position.set_byte_end_value(cursor.position() as usize);
 
                     if self.nbt_parser.is_list_end() {
-                        self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
+                        self.nbt_parser
+                            .change_state_to(fsm::ParseNbtFsmState::Normal);
                         self.nbt_parser.reset_list();
 
                         if let NbtTagId::Compound = tag_id {
                             depth_delta += 1;
                             // if we are in a list of compound, we need to exist the list parser and go back to normal
                             // the list is finished, so we do not need to store the list parser status
-                            self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
+                            self.nbt_parser
+                                .change_state_to(fsm::ParseNbtFsmState::Normal);
                         } else {
                             depth_delta -= 1
                         }
@@ -606,7 +618,8 @@ impl NbtData {
 
                             // if we are in a list of compound, we need to exist the list parser and go back to normal
                             // but we also need to store the point in the list were we are
-                            self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::Normal);
+                            self.nbt_parser
+                                .change_state_to(fsm::ParseNbtFsmState::Normal);
                             self.nbt_parser.switch_list_ctx();
                         }
                     }
@@ -630,7 +643,8 @@ impl NbtData {
 
             self.nbt_parser.increment_index();
             if new_nbt_tag.position().byte_end_all() >= total_bytes {
-                self.nbt_parser.change_state_to(fsm::ParseNbtFsmState::EndOfFile);
+                self.nbt_parser
+                    .change_state_to(fsm::ParseNbtFsmState::EndOfFile);
                 break; //TODO Remove
             }
         }
@@ -654,35 +668,38 @@ impl NbtData {
     fn set_new_parent_index(
         &mut self,
         depth_delta: i64,
-        nbt_parent_index: &mut usize,
-    ) -> Result<(), NbtReadError> {
+        nbt_parent_index: usize,
+    ) -> Result<usize, NbtReadError> {
+        let new_parent_index;
+
         match depth_delta {
             0 => {
                 // nothing to do, old parent remains valid since we didnt go deeper
+                new_parent_index = nbt_parent_index;
             }
             1 => {
                 // we moved down in the nbt tree. This tag is the children of the tag in previous depth level
-                *nbt_parent_index = self.nbt_parser.index() - 1;
+                new_parent_index = self.nbt_parser.index() - 1;
             }
             -1 => {
                 //we moved up in the nbt tree. we need to restore the previous parent index
                 //the new parent is the parent of the previous parent
-                *nbt_parent_index = self.tags[*nbt_parent_index].position().parent();
+                new_parent_index = self.tags[nbt_parent_index].position().parent();
             }
             -2 => {
                 //we moved up in the nbt tree. we need to restore the previous parent index
                 //this case is only hit when a list of compound is finished
                 // -1 because we exit the compound
                 // -1 because we exit the list
-                let nbt_grandparent_index = self.tags[*nbt_parent_index].position().parent();
-                *nbt_parent_index = self.tags[nbt_grandparent_index].position().parent();
+                let nbt_grandparent_index = self.tags[nbt_parent_index].position().parent();
+                new_parent_index = self.tags[nbt_grandparent_index].position().parent();
             }
             _ => {
                 //this should never happen, because delta_depth can only be -2, -1, 0, 1
                 return Err(NbtReadError::InvalidNbtDepth);
             }
         }
-        Ok(())
+        Ok(new_parent_index)
     }
 
     fn exit_nbttag_compound(&mut self, nbt_parent_index: usize) -> i64 {

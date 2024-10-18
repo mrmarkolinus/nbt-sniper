@@ -53,7 +53,6 @@ impl NbtListParser {
     pub fn is_end(&self) -> bool {
         self.list_elem_count >= self.list_len - 1
     }
-
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
@@ -113,7 +112,6 @@ impl NbtParser {
     }
 
     pub fn restore_list_ctx(&mut self) -> bool {
-
         match self.unfinished_lists.pop() {
             //the list of compounds was not yet finished, restore the ctx
             Some(previous_list_parser) => {
@@ -152,7 +150,6 @@ impl NbtParser {
     pub fn is_list_end(&self) -> bool {
         self.list_parser.is_end()
     }
-
 }
 
 #[cfg(test)]
