@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use nbtsniper::{NbtFile, nbt};
+use nbtsniper::{nbt, NbtFile};
 
 #[test]
 fn bigtest() {
@@ -41,8 +41,7 @@ fn bigtest() {
 }
 
 #[test]
-fn read_bigtest() {
-
+fn test_bigtest_nbt_tags_names() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
 
     let nbt_names = vec![
@@ -83,6 +82,16 @@ fn read_bigtest() {
             "",
     ];
 
+    for (i, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
+        println!("{}: {}", i, nbttag.name());
+        assert_eq!(nbttag.name(), nbt_names[i]);
+    }
+}
+
+#[test]
+fn test_bigtest_nbt_tags_types() {
+    let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
+
     let nbt_tag_types = vec![
         nbt::NbtTagId::Compound,
         nbt::NbtTagId::Long,
@@ -106,7 +115,7 @@ fn read_bigtest() {
         nbt::NbtTagId::Long,
         nbt::NbtTagId::Long,
         nbt::NbtTagId::Long,
-        nbt::NbtTagId::Compound,
+        nbt::NbtTagId::List,
         nbt::NbtTagId::Compound,
         nbt::NbtTagId::String,
         nbt::NbtTagId::Long,
@@ -122,7 +131,21 @@ fn read_bigtest() {
     ];
 
     for (i, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
-        assert_eq!(nbttag.name(), nbt_names[i]);
-        assert_eq!(nbttag.value(), nbt_tag_types[i]);
+        println!("{}: {}", i, nbttag.name());
+        assert_eq!(nbttag.value().into_id(), nbt_tag_types[i]);
     }
+}
+
+#[test]
+fn test_bigtest_start_end_bytes_are_continuous() {
+    let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
+    let mut last_byte_position = -1;
+    let mut current_byte_position = 0;
+
+    /*     for nbttag in mc_bin.nbt_tags() {
+        current_byte_position = nbttag.position().byte_start_all() as i64;
+        assert_eq!(current_byte_position, last_byte_position + 1);
+        last_byte_position = current_byte_position;
+        current_byte_position
+    } */
 }

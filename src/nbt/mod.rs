@@ -512,7 +512,12 @@ impl NbtData {
             }
             // #4 Append the parsed NbtTag to the NbtTag tree and prepare for the next iteration
             // #41 Update the NbtTag position in the NbtTag tree
-            self.update_tag_position(&mut new_tag_position, &mut cursor, nbt_parent_index);
+            self.update_tag_position(
+                &new_nbt_tag.value().into_id(),
+                &mut new_tag_position,
+                &mut cursor,
+                nbt_parent_index,
+            );
             new_nbt_tag.set_position(new_tag_position.clone());
 
             // #42 Append the parsed NbtTag to the NbtTag tree
@@ -532,6 +537,7 @@ impl NbtData {
 
     fn update_tag_position(
         &mut self,
+        tag_id: &NbtTagId,
         new_tag_position: &mut NbtTagPosition,
         cursor: &mut Cursor<Vec<u8>>,
         nbt_parent_index: usize,
@@ -540,6 +546,16 @@ impl NbtData {
         new_tag_position.set_index(*self.nbt_parser.index());
         new_tag_position.set_depth(*self.nbt_parser.tree_depth());
         new_tag_position.set_parent(nbt_parent_index);
+
+        match tag_id {
+            NbtTagId::Compound | NbtTagId::List => {
+                // do nothing, byte_end_with_children will be set when a new child is appended
+            }
+            _ => {
+                //all the other tag ids cannot have children so we set byte_end_with_children to the same value as byte_end_all
+                new_tag_position.set_byte_end_all_with_children(new_tag_position.byte_end_all());
+            }
+        }
     }
 
     fn init_tag_position(
