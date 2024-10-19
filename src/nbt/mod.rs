@@ -512,10 +512,7 @@ impl NbtData {
             // #22 reset the NbtTag information and start parsing a new NbtTag
             new_nbt_tag.set_name("".to_string());
             new_nbt_tag.set_value(NbtTagType::End(None));
-
-            new_tag_position.reset();
-            new_tag_position.set_byte_start_all(cursor.position() as usize);
-            new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
+            self.init_tag_position(&mut new_tag_position, &mut cursor);
 
             // #3 Start parsing a new NbtTag
             match self.nbt_parser.state() {
@@ -528,7 +525,6 @@ impl NbtData {
                         &mut cursor,
                     )?;
                 }
-
                 // #32 ParseFSM is in List state: NbtTag which are chidlrend ofLists NbtTags have no names and no values
                 fsm::ParseNbtFsmState::List => {
                     depth_delta = self.parse_list_state(
@@ -537,19 +533,14 @@ impl NbtData {
                         &mut cursor,
                     )?;
                 }
-
                 // #33 ParseFSM is in EndOfFile: there are no more bytes to read
                 fsm::ParseNbtFsmState::EndOfFile => {
                     break;
                 }
             }
-
             // #4 Append the parsed NbtTag to the NbtTag tree and prepare for the next iteration
             // #41 Update the NbtTag position in the NbtTag tree
-            new_tag_position.set_byte_end_all(cursor.position() as usize);
-            new_tag_position.set_index(*self.nbt_parser.index());
-            new_tag_position.set_depth(*self.nbt_parser.tree_depth());
-            new_tag_position.set_parent(nbt_parent_index);
+            self.update_tag_position(&mut new_tag_position, &mut cursor, nbt_parent_index);
             new_nbt_tag.set_position(new_tag_position.clone());
 
             // #42 Append the parsed NbtTag to the NbtTag tree
@@ -565,6 +556,28 @@ impl NbtData {
         }
 
         Ok(())
+    }
+
+    fn update_tag_position(
+        &mut self,
+        new_tag_position: &mut NbtTagPosition,
+        cursor: &mut Cursor<Vec<u8>>,
+        nbt_parent_index: usize,
+    ) {
+        new_tag_position.set_byte_end_all(cursor.position() as usize);
+        new_tag_position.set_index(*self.nbt_parser.index());
+        new_tag_position.set_depth(*self.nbt_parser.tree_depth());
+        new_tag_position.set_parent(nbt_parent_index);
+    }
+
+    fn init_tag_position(
+        &mut self,
+        new_tag_position: &mut NbtTagPosition,
+        cursor: &mut Cursor<Vec<u8>>,
+    ) {
+        new_tag_position.reset();
+        new_tag_position.set_byte_start_all(cursor.position() as usize);
+        new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
     }
 
     fn append_nbt_tag(&mut self, nbt_tag: &NbtTag, nbt_parent_index: usize) {
