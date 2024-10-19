@@ -82,9 +82,9 @@ fn test_bigtest_nbt_tags_names() {
             "",
     ];
 
-    for (i, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
-        println!("{}: {}", i, nbttag.name());
-        assert_eq!(nbttag.name(), nbt_names[i]);
+    for (ii, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
+        println!("{}: {}", ii, nbttag.name());
+        assert_eq!(nbttag.name(), nbt_names[ii]);
     }
 }
 
@@ -130,22 +130,25 @@ fn test_bigtest_nbt_tags_types() {
         nbt::NbtTagId::End,
     ];
 
-    for (i, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
-        println!("{}: {}", i, nbttag.name());
-        assert_eq!(nbttag.value().into_id(), nbt_tag_types[i]);
+    for (ii, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
+        println!("{}: {}", ii, nbttag.name());
+        assert_eq!(nbttag.value().into_id(), nbt_tag_types[ii]);
     }
 }
 
 #[test]
 fn test_bigtest_start_end_bytes_are_continuous() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
-    let mut last_byte_position = -1;
-    let mut current_byte_position = 0;
+    //let mut last_byte_position = -1;
+    let mut curr_pos ;
+    let mut next_pos ;
 
-    /*     for nbttag in mc_bin.nbt_tags() {
-        current_byte_position = nbttag.position().byte_start_all() as i64;
-        assert_eq!(current_byte_position, last_byte_position + 1);
-        last_byte_position = current_byte_position;
-        current_byte_position
-    } */
+    for (ii, _) in mc_bin.nbt_tags().iter().enumerate() {
+        if ii + 1 == mc_bin.nbt_tags().len() { break; }
+        
+        curr_pos = mc_bin.nbt_tags()[ii].position().byte_end_all();
+        next_pos = mc_bin.nbt_tags()[ii+1].position().byte_start_all();
+        assert_eq!(curr_pos, next_pos);
+
+    } 
 }
