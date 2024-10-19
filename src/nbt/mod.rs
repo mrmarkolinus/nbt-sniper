@@ -400,54 +400,6 @@ impl NbtTag {
     pub fn children(&mut self) -> &mut Vec<usize> {
         &mut self.position.children
     }
-
-    /* pub fn byte_start(&self) -> usize {
-        self.position.raw_bytes.byte_start_all
-    }
-
-    pub fn set_byte_start(&mut self, byte_start: usize) {
-        self.position.raw_bytes.byte_start_all = byte_start;
-    }
-
-    pub fn byte_end(&self) -> usize {
-        self.position.raw_bytes.byte_end_all
-    }
-
-    pub fn set_byte_end(&mut self, byte_end: usize) {
-        self.position.raw_bytes.byte_end_all = byte_end;
-    }
-
-    pub fn byte_end_with_children(&self) -> usize {
-        self.position.raw_bytes.byte_end_all_with_children
-    }
-
-    pub fn set_byte_end_with_children(&mut self, byte_end_with_children: usize) {
-        self.position.raw_bytes.byte_end_all_with_children = byte_end_with_children;
-    }
-
-    pub fn index(&self) -> usize {
-        self.position.index
-    }
-
-    pub fn set_index(&mut self, index: usize) {
-        self.position.index = index;
-    }
-
-    pub fn depth(&self) -> i64 {
-        self.position.depth
-    }
-
-    pub fn set_depth(&mut self, depth: i64) {
-        self.position.depth = depth;
-    }
-
-    pub fn parent(&self) -> usize {
-        self.position.parent
-    }
-
-    pub fn set_parent(&mut self, parent: usize) {
-        self.position.parent = parent;
-    } */
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
