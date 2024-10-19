@@ -551,12 +551,10 @@ impl NbtData {
             new_tag_position.set_parent(nbt_parent_index);
 
             new_nbt_tag.set_position(new_tag_position.clone());
-            self.tags.push(new_nbt_tag.clone());
-            self.tags_map
-                .insert(new_nbt_tag.name().to_string(), new_tag_position.index());
-            self.add_child_to_parent(&new_nbt_tag, nbt_parent_index);
 
+            self.append_nbt_tag(&new_nbt_tag, nbt_parent_index);
             self.nbt_parser.increment_index();
+
             if new_nbt_tag.position().byte_end_all() >= total_bytes {
                 self.nbt_parser
                     .change_state_to(fsm::ParseNbtFsmState::EndOfFile);
@@ -565,6 +563,15 @@ impl NbtData {
         }
 
         Ok(())
+    }
+
+    fn append_nbt_tag(&mut self, nbt_tag: &NbtTag, nbt_parent_index: usize) {
+        let index = nbt_tag.position().index();
+        let name = nbt_tag.name().to_string();
+
+        self.tags.push(nbt_tag.clone());
+        self.tags_map.insert(name, index);
+        self.add_child_to_parent(&nbt_tag, nbt_parent_index);
     }
 
     fn parse_list_state(
