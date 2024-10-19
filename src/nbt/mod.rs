@@ -124,6 +124,26 @@ impl Default for NbtTagType {
     }
 }
 
+impl NbtTagType {
+    pub fn into_id(&self) -> NbtTagId {
+        match self {
+            NbtTagType::End(_) => NbtTagId::End,
+            NbtTagType::Byte(_) => NbtTagId::Byte,
+            NbtTagType::Short(_) => NbtTagId::Short,
+            NbtTagType::Int(_) => NbtTagId::Int,
+            NbtTagType::Long(_) => NbtTagId::Long,
+            NbtTagType::Float(_) => NbtTagId::Float,
+            NbtTagType::Double(_) => NbtTagId::Double,
+            NbtTagType::ByteArray(_) => NbtTagId::ByteArray,
+            NbtTagType::String(_) => NbtTagId::String,
+            NbtTagType::List(_) => NbtTagId::List,
+            NbtTagType::Compound(_) => NbtTagId::Compound,
+            NbtTagType::IntArray(_) => NbtTagId::IntArray,
+            NbtTagType::LongArray(_) => NbtTagId::LongArray,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 struct NbtTagPositionRawBytes {
     byte_start_all: usize,
