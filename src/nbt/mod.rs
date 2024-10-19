@@ -488,8 +488,8 @@ impl NbtData {
     }
 
     pub fn parse(&mut self) -> Result<(), NbtReadError> {
-        // #01 Initialize
-        // #01 Initialize NbtTag content
+        // #1 Initialize
+        // #11 Initialize NbtTag content
         let mut new_tag_position = NbtTagPosition::new();
         let mut new_nbt_tag = NbtTag {
             name: "".to_string(),
@@ -497,7 +497,7 @@ impl NbtData {
             position: new_tag_position.clone(),
         };
 
-        // #01 Initialize auxiliary information for parsing and building the NbtTag tree
+        // #12 Initialize auxiliary information for parsing and building the NbtTag tree
         let mut cursor = Cursor::new(self.raw_bytes.clone());
         let total_bytes = cursor.seek(SeekFrom::End(0)).unwrap() as usize;
         let mut nbt_parent_index = 0;
@@ -505,12 +505,11 @@ impl NbtData {
 
         cursor.seek(SeekFrom::Start(0)).unwrap();
         loop {
-            // #02 Reinit the loop for a new NbtTag
-            // #021 set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
+            // #2 Reinit the loop for a new NbtTag
+            // #21 set the current Nbt tree depth and update the parent index (who is the parent of the processed NbtTag)
             nbt_parent_index = self.update_nbttree_depth(nbt_parent_index, depth_delta)?;
-            depth_delta = 0;
 
-            // #022 reset the NbtTag information and start parsing a new NbtTag
+            // #22 reset the NbtTag information and start parsing a new NbtTag
             new_nbt_tag.set_name("".to_string());
             new_nbt_tag.set_value(NbtTagType::End(None));
 
@@ -518,9 +517,9 @@ impl NbtData {
             new_tag_position.set_byte_start_all(cursor.position() as usize);
             new_tag_position.set_byte_end_all(new_tag_position.byte_start_all());
 
-            // #03 Start parsing a new NbtTag
+            // #3 Start parsing a new NbtTag
             match self.nbt_parser.state() {
-                // #031 ParseFSM is in normal state: we are parsing any NbtTag that is NOT a List child
+                // #31 ParseFSM is in normal state: we are parsing any NbtTag that is NOT a List child
                 fsm::ParseNbtFsmState::Normal => {
                     depth_delta = self.parse_normal_state(
                         &mut new_nbt_tag,
@@ -530,7 +529,7 @@ impl NbtData {
                     )?;
                 }
 
-                // #032 ParseFSM is in List state: NbtTag which are chidlrend ofLists NbtTags have no names and no values
+                // #32 ParseFSM is in List state: NbtTag which are chidlrend ofLists NbtTags have no names and no values
                 fsm::ParseNbtFsmState::List => {
                     depth_delta = self.parse_list_state(
                         &mut new_nbt_tag,
@@ -539,22 +538,25 @@ impl NbtData {
                     )?;
                 }
 
-                // #033 ParseFSM is in EndOfFile: there are no more bytes to read
+                // #33 ParseFSM is in EndOfFile: there are no more bytes to read
                 fsm::ParseNbtFsmState::EndOfFile => {
                     break;
                 }
             }
 
+            // #4 Append the parsed NbtTag to the NbtTag tree and prepare for the next iteration
+            // #41 Update the NbtTag position in the NbtTag tree
             new_tag_position.set_byte_end_all(cursor.position() as usize);
             new_tag_position.set_index(*self.nbt_parser.index());
             new_tag_position.set_depth(*self.nbt_parser.tree_depth());
             new_tag_position.set_parent(nbt_parent_index);
-
             new_nbt_tag.set_position(new_tag_position.clone());
 
+            // #42 Append the parsed NbtTag to the NbtTag tree
             self.append_nbt_tag(&new_nbt_tag, nbt_parent_index);
             self.nbt_parser.increment_index();
 
+            // #43 check if we are at the end of the file or we need to proceed to the next loop
             if new_nbt_tag.position().byte_end_all() >= total_bytes {
                 self.nbt_parser
                     .change_state_to(fsm::ParseNbtFsmState::EndOfFile);
