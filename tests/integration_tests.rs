@@ -140,15 +140,16 @@ fn test_bigtest_nbt_tags_types() {
 fn test_bigtest_start_end_bytes_are_continuous() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
     //let mut last_byte_position = -1;
-    let mut curr_pos ;
-    let mut next_pos ;
+    let mut curr_pos;
+    let mut next_pos;
 
     for (ii, _) in mc_bin.nbt_tags().iter().enumerate() {
-        if ii + 1 == mc_bin.nbt_tags().len() { break; }
+        if ii + 1 == mc_bin.nbt_tags().len() {
+            break;
+        }
 
         curr_pos = mc_bin.nbt_tags()[ii].position().byte_end_all();
-        next_pos = mc_bin.nbt_tags()[ii+1].position().byte_start_all();
+        next_pos = mc_bin.nbt_tags()[ii + 1].position().byte_start_all();
         assert_eq!(curr_pos + 1, next_pos);
-
-    } 
+    }
 }

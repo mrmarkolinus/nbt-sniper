@@ -113,8 +113,14 @@ impl NbtFile {
         print!("Raw Bytes: ");
         print!(
             "ID[{}:{}] ",
-            nbttag.position().byte_start_id(),
-            nbttag.position().byte_end_id()
+            match nbttag.position().byte_start_id() {
+                Some(x) => x.to_string(),
+                None => "N/A".to_string(),
+            },
+            match nbttag.position().byte_end_id() {
+                Some(x) => x.to_string(),
+                None => "N/A".to_string(),
+            }
         );
         print!(
             "Name[{}:{}] ",

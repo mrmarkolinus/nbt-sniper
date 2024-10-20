@@ -149,8 +149,8 @@ struct NbtTagPositionRawBytes {
     byte_start_all: usize,
     byte_end_all: usize,
     byte_end_all_with_children: usize,
-    byte_start_id: usize,
-    byte_end_id: usize,
+    byte_start_id: Option<usize>,
+    byte_end_id: Option<usize>,
     byte_start_name: Option<usize>,
     byte_end_name: Option<usize>,
     byte_start_value: Option<usize>,
@@ -166,8 +166,8 @@ impl NbtTagPositionRawBytes {
         self.byte_start_all = 0;
         self.byte_end_all = 0;
         self.byte_end_all_with_children = 0;
-        self.byte_start_id = 0;
-        self.byte_end_id = 0;
+        self.byte_start_id = None;
+        self.byte_end_id = None;
         self.byte_start_name = None;
         self.byte_end_name = None;
         self.byte_start_value = None;
@@ -186,11 +186,11 @@ impl NbtTagPositionRawBytes {
         self.byte_end_all_with_children
     }
 
-    pub fn byte_start_id(&self) -> usize {
+    pub fn byte_start_id(&self) -> Option<usize> {
         self.byte_start_id
     }
 
-    pub fn byte_end_id(&self) -> usize {
+    pub fn byte_end_id(&self) -> Option<usize> {
         self.byte_end_id
     }
 
@@ -223,11 +223,11 @@ impl NbtTagPositionRawBytes {
     }
 
     pub fn set_byte_start_id(&mut self, byte_start_id: usize) {
-        self.byte_start_id = byte_start_id;
+        self.byte_start_id = Some(byte_start_id);
     }
 
     pub fn set_byte_end_id(&mut self, byte_end_id: usize) {
-        self.byte_end_id = byte_end_id;
+        self.byte_end_id = Some(byte_end_id);
     }
 
     pub fn set_byte_start_name(&mut self, byte_start_name: usize) {
@@ -287,11 +287,11 @@ impl NbtTagPosition {
         self.raw_bytes.byte_end_all_with_children()
     }
 
-    pub fn byte_start_id(&self) -> usize {
+    pub fn byte_start_id(&self) -> Option<usize> {
         self.raw_bytes.byte_start_id()
     }
 
-    pub fn byte_end_id(&self) -> usize {
+    pub fn byte_end_id(&self) -> Option<usize> {
         self.raw_bytes.byte_end_id()
     }
 
@@ -543,14 +543,13 @@ impl NbtData {
         nbt_parent_index: usize,
     ) {
         let new_end_all = cursor.position() as usize;
-        
+
         // byte_end must always be greater or equal to byte_start
         // in case of a list of compound, byte_end would be 1 less then byte_start if we do not check this
         // compound tag only has 1 byte id, but list children do not have tag ids, since tag id is defined by the list itself
         if new_end_all > new_tag_position.byte_start_all() {
             new_tag_position.set_byte_end_all(new_end_all - 1);
-        }
-        else {
+        } else {
             new_tag_position.set_byte_end_all(new_end_all);
         }
         new_tag_position.set_index(*self.nbt_parser.index());
