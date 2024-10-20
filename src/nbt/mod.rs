@@ -39,6 +39,12 @@ pub enum NbtReadError {
 
     #[error("Invalid NBT Root Tag Id: NbtFile must start with a compound tag")]
     InvalidNbtRootTagId, // if root tag is not a compound
+
+    #[error("Negative NBT Tag Length")]
+    NegativeNbtTagLenght, // if tag length is negative
+
+    #[error("NBT file is empty")]
+    EmptyFile // if file is empty
 }
 
 #[derive(
@@ -435,6 +441,9 @@ pub struct NbtData {
 
 impl NbtData {
     pub fn from_buf(file_buffer: Vec<u8>) -> Result<NbtData, NbtReadError> {
+        if file_buffer.is_empty() {
+            return Err(NbtReadError::EmptyFile);
+        }
         let mut nbt_data = NbtData::new(file_buffer);
         nbt_data.parse()?;
 

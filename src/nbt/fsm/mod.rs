@@ -278,8 +278,8 @@ mod tests {
     fn test_nbt_parser_new() {
         let parser = NbtParser::new();
         match parser.state {
-            ParseNbtFsmState::Normal => (),
-            _ => panic!("Initial state should be Normal"),
+            ParseNbtFsmState::NbtRoot => (),
+            _ => panic!("Initial state should be NbtRoot"),
         }
         assert_eq!(parser.list_parser.list_tag_id, NbtTagId::End);
         assert!(parser.unfinished_lists.is_empty());

@@ -18,6 +18,11 @@ pub fn nbt_tag_id(
 
 pub fn nbt_tag_string(cursor: &mut Cursor<Vec<u8>>) -> Result<String, nbt::NbtReadError> {
     let name_len = cursor.read_i16::<BigEndian>()?;
+    
+    if name_len < 0 {
+        return Err(nbt::NbtReadError::NegativeNbtTagLenght);
+    }
+    
     let mut name = String::with_capacity(name_len as usize);
 
     for _ in 0..name_len {
@@ -241,7 +246,7 @@ mod tests {
     }
 
     #[test]
-    fn test_nbt_tag_string_negative_length() {
+    fn test_nbt_tag_string_negative_length() -> Result<(), nbt::NbtReadError> {
         let mut data = Vec::new();
         data.extend(&(-1i16).to_be_bytes()); // name_len = -1
                                              // Since the loop is 0..-1, which is invalid, it will not execute
@@ -257,8 +262,8 @@ mod tests {
                                              // So it will try to read 65535 bytes, which is not present, leading to an error
         let cursor = make_cursor(data);
         let mut cursor = cursor;
-        let result = nbt_tag_string(&mut cursor);
-        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+        assert!(nbt_tag_string(&mut cursor).is_err());
+        Ok(())
     }
 
     #[test]

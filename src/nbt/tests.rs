@@ -273,9 +273,7 @@ mod tests {
     fn test_nbt_data_from_buf_empty() {
         let buffer = vec![];
         let result = NbtData::from_buf(buffer);
-        assert!(result.is_ok());
-        let nbt_data = result.unwrap();
-        assert!(nbt_data.nbt_tags().is_empty());
+        assert!(result.is_err());
     }
 
     #[test]
