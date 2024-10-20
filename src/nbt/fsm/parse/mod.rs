@@ -472,15 +472,44 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "List length is too large")]
-    fn test_nbt_tag_list_panic_large_length() {
+    fn test_nbt_tag_list_panic_large_length_defined() -> Result<(), nbt::NbtReadError>{
         // List tag with length > 65536
         let mut data = Vec::new();
         data.push(1u8); // List element tag_id = Byte
+        
+        let bad_list_len = 65_537i32;
+        let high_byte = (bad_list_len >> 8) as u8; // Get the higher 8 bits
+        let low_byte = (bad_list_len & 0xFF) as u8; // Get the lower 8 bits
+        data.push(high_byte);
+        data.push(low_byte);
         data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+        
         let cursor = make_cursor(data);
         let mut cursor = cursor;
-        nbt_tag(&mut cursor, &nbt::NbtTagId::List).unwrap();
+        assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nbt_tag_list_panic_large_length_real() -> Result<(), nbt::NbtReadError>{
+        // List tag with length > 65536
+        let mut data = Vec::new();
+        data.push(1u8); // List element tag_id = Byte
+        
+        let bad_list_len = 65_530i32; // List len is defined smaller than 65536
+        let high_byte = (bad_list_len >> 8) as u8; // Get the higher 8 bits
+        let low_byte = (bad_list_len & 0xFF) as u8; // Get the lower 8 bits
+        data.push(high_byte);
+        data.push(low_byte);
+        //but the real list length is 65_537
+        data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+        
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());
+
+        Ok(())
     }
 
     #[test]
