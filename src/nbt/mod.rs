@@ -542,7 +542,17 @@ impl NbtData {
         cursor: &mut Cursor<Vec<u8>>,
         nbt_parent_index: usize,
     ) {
-        new_tag_position.set_byte_end_all((cursor.position() - 1) as usize);
+        let new_end_all = cursor.position() as usize;
+        
+        // byte_end must always be greater or equal to byte_start
+        // in case of a list of compound, byte_end would be 1 less then byte_start if we do not check this
+        // compound tag only has 1 byte id, but list children do not have tag ids, since tag id is defined by the list itself
+        if new_end_all > new_tag_position.byte_start_all() {
+            new_tag_position.set_byte_end_all(new_end_all - 1);
+        }
+        else {
+            new_tag_position.set_byte_end_all(new_end_all);
+        }
         new_tag_position.set_index(*self.nbt_parser.index());
         new_tag_position.set_depth(*self.nbt_parser.tree_depth());
         new_tag_position.set_parent(nbt_parent_index);
