@@ -332,13 +332,14 @@ mod tests {
         assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
     }
 
-    /*  #[test]
+      #[test]
     fn test_nbt_tag_long() {
-        let cursor = make_cursor(8i64::to_be_bytes().to_vec()); // 42
+        let data = vec![0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,42u8];
+        let cursor = make_cursor(data); // 42
         let mut cursor = cursor;
         let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Long).unwrap();
         assert_eq!(result, nbt::NbtTagType::Long(42));
-    } */
+    }
 
     #[test]
     fn test_nbt_tag_long_io_error() {
