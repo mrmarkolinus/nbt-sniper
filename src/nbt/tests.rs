@@ -298,6 +298,12 @@ mod tests {
         // Int Value: 42 (i32 big endian)
 
         let mut buffer = Vec::new();
+
+        // Compound Tag
+        buffer.push(NbtTagId::Compound.into_u8());
+        buffer.extend(&8u16.to_be_bytes()); // Name length
+        buffer.extend("Compound".as_bytes());
+
         buffer.push(NbtTagId::Int.into_u8());
 
         // Name length: 4
@@ -309,9 +315,12 @@ mod tests {
         // Int value: 42
         buffer.extend(&42i32.to_be_bytes());
 
+        // End Tag
+        buffer.push(NbtTagId::End.into_u8());
+
         let nbt_data = NbtData::from_buf(buffer).unwrap();
-        assert_eq!(nbt_data.nbt_tags().len(), 1);
-        let tag = &nbt_data.nbt_tags()[0];
+        assert_eq!(nbt_data.nbt_tags().len(), 3);
+        let tag = &nbt_data.nbt_tags()[1];
         assert_eq!(tag.name(), "Test");
         assert_eq!(tag.value(), &NbtTagType::Int(42));
     }
@@ -323,6 +332,11 @@ mod tests {
         // 2. String tag with name "B" and value "Hello"
 
         let mut buffer = Vec::new();
+
+        // Compound Tag
+        buffer.push(NbtTagId::Compound.into_u8());
+        buffer.extend(&8u16.to_be_bytes()); // Name length
+        buffer.extend("Compound".as_bytes());
 
         // First Tag: Byte
         buffer.push(NbtTagId::Byte.into_u8());
@@ -337,14 +351,17 @@ mod tests {
         buffer.extend(&5u16.to_be_bytes()); // String length
         buffer.extend("Hello".as_bytes());
 
-        let nbt_data = NbtData::from_buf(buffer).unwrap();
-        assert_eq!(nbt_data.nbt_tags().len(), 2);
+        // End Tag
+        buffer.push(NbtTagId::End.into_u8());
 
-        let tag1 = &nbt_data.nbt_tags()[0];
+        let nbt_data = NbtData::from_buf(buffer).unwrap();
+        assert_eq!(nbt_data.nbt_tags().len(), 4);
+
+        let tag1 = &nbt_data.nbt_tags()[1];
         assert_eq!(tag1.name(), "A");
         assert_eq!(tag1.value(), &NbtTagType::Byte(1));
 
-        let tag2 = &nbt_data.nbt_tags()[1];
+        let tag2 = &nbt_data.nbt_tags()[2];
         assert_eq!(tag2.name(), "B");
         assert_eq!(tag2.value(), &NbtTagType::String("Hello".to_string()));
     }
@@ -363,7 +380,7 @@ mod tests {
 
         // Compound Tag
         buffer.push(NbtTagId::Compound.into_u8());
-        buffer.extend(&6u16.to_be_bytes()); // Name length
+        buffer.extend(&8u16.to_be_bytes()); // Name length
         buffer.extend("Compound".as_bytes());
 
         // Nested Int Tag
@@ -394,10 +411,11 @@ mod tests {
         assert_eq!(end_tag.position().parent(), 0);
     }
 
-    #[test]
+     #[test] 
     fn test_nbt_data_parse_list_of_strings() {
         // Create a buffer representing a List tag containing Strings
         // Structure:
+        // [Root Compound]
         // [List Tag ID][Name Length][Name][List Element Type][List Length]
         // [String 1]
         // [String 2]
@@ -405,6 +423,11 @@ mod tests {
         // [End Tag ID]
 
         let mut buffer = Vec::new();
+
+        // Compound Tag
+        buffer.push(NbtTagId::Compound.into_u8());
+        buffer.extend(&8u16.to_be_bytes()); // Name length
+        buffer.extend("Compound".as_bytes());
 
         // List Tag
         buffer.push(NbtTagId::List.into_u8());
@@ -421,22 +444,25 @@ mod tests {
         buffer.extend(&5u16.to_be_bytes()); // String length
         buffer.extend("World".as_bytes());
 
-        let nbt_data = NbtData::from_buf(buffer).unwrap();
-        assert_eq!(nbt_data.nbt_tags().len(), 3);
+        // End Tag
+        buffer.push(NbtTagId::End.into_u8());
 
-        let list_tag = &nbt_data.nbt_tags()[0];
+        let nbt_data = NbtData::from_buf(buffer).unwrap();
+        assert_eq!(nbt_data.nbt_tags().len(), 5);
+
+        let list_tag = &nbt_data.nbt_tags()[1];
         assert_eq!(list_tag.name(), "List");
         assert_eq!(list_tag.value(), &NbtTagType::List((NbtTagId::String, 2)));
         //assert_eq!(list_tag.position().children().len(), 2); TODO: Not implemented
 
-        let string1 = &nbt_data.nbt_tags()[1];
+        let string1 = &nbt_data.nbt_tags()[2];
         assert_eq!(string1.value(), &NbtTagType::String("Hello".to_string()));
-        assert_eq!(string1.position().parent(), 0);
+        assert_eq!(string1.position().parent(), 1);
 
-        let string2 = &nbt_data.nbt_tags()[2];
+        let string2 = &nbt_data.nbt_tags()[3];
         assert_eq!(string2.value(), &NbtTagType::String("World".to_string()));
-        assert_eq!(string2.position().parent(), 0);
-    }
+        assert_eq!(string2.position().parent(), 1);
+    } 
 
     // Additional tests can be added here to cover more scenarios, such as:
     // - Parsing ByteArray, IntArray, LongArray
