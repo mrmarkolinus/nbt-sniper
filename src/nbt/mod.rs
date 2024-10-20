@@ -36,6 +36,9 @@ pub enum NbtReadError {
 
     #[error("Invalid NBT LongArray lenght")]
     InvalidNbtLongArrayLenght, // if array is longer than MAX_BYTE_ARRAY_LENGTH
+
+    #[error("Invalid NBT Root Tag Id: NbtFile must start with a compound tag")]
+    InvalidNbtRootTagId, // if root tag is not a compound
 }
 
 #[derive(
@@ -488,16 +491,31 @@ impl NbtData {
 
             // #3 Start parsing a new NbtTag
             match self.nbt_parser.state() {
-                // #31 ParseFSM is in normal state: we are parsing any NbtTag that is NOT a List child
+                // #31  ParseFSM is in NbtRoot state: the first NbtTag of a NbtFile must always be a Root Compound Tag
+                //      in this state we parse a normal tag, but we exit if the root is not a compound
+                //      if the root is a compound we switch to Normal state
+                fsm::ParseNbtFsmState::NbtRoot => {
+                    depth_delta = self.parse_normal_state(
+                        &mut new_nbt_tag,
+                        &mut new_tag_position,
+                        nbt_parent_index,
+                        &mut cursor,
+                        true,
+                    )?;
+                    self.nbt_parser
+                        .change_state_to(fsm::ParseNbtFsmState::Normal);
+                }
+                // #32 ParseFSM is in normal state: we are parsing any NbtTag that is NOT a List child
                 fsm::ParseNbtFsmState::Normal => {
                     depth_delta = self.parse_normal_state(
                         &mut new_nbt_tag,
                         &mut new_tag_position,
                         nbt_parent_index,
                         &mut cursor,
+                        false,
                     )?;
                 }
-                // #32 ParseFSM is in List state: NbtTag which are chidlrend ofLists NbtTags have no names and no values
+                // #33 ParseFSM is in List state: NbtTag which are chidlrend ofLists NbtTags have no names and no values
                 fsm::ParseNbtFsmState::List => {
                     depth_delta = self.parse_list_state(
                         &mut new_nbt_tag,
@@ -505,7 +523,7 @@ impl NbtData {
                         &mut cursor,
                     )?;
                 }
-                // #33 ParseFSM is in EndOfFile: there are no more bytes to read
+                // #34 ParseFSM is in EndOfFile: there are no more bytes to read
                 fsm::ParseNbtFsmState::EndOfFile => {
                     break;
                 }
@@ -637,10 +655,15 @@ impl NbtData {
         new_tag_position: &mut NbtTagPosition,
         nbt_parent_index: usize,
         cursor: &mut Cursor<Vec<u8>>,
+        error_if_not_tag_compound: bool,
     ) -> Result<i64, NbtReadError> {
         let mut depth_delta = 0;
 
         let tag_id = self.parse_nbt_tag_id(new_tag_position, cursor)?;
+
+        if error_if_not_tag_compound && tag_id != NbtTagId::Compound {
+            return Err(NbtReadError::InvalidNbtRootTagId);
+        }
 
         if let NbtTagId::End = tag_id {
             depth_delta = self.exit_nbttag_compound(nbt_parent_index);

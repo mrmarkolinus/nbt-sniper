@@ -7,6 +7,7 @@ pub mod parse;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub enum ParseNbtFsmState {
     #[default]
+    NbtRoot,
     Normal,
     List,
     EndOfFile,
