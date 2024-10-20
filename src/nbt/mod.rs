@@ -525,7 +525,7 @@ impl NbtData {
             self.nbt_parser.increment_index();
 
             // #43 check if we are at the end of the file or we need to proceed to the next loop
-            if new_nbt_tag.position().byte_end_all() >= total_bytes {
+            if new_nbt_tag.position().byte_end_all() >= (total_bytes - 1) {
                 self.nbt_parser
                     .change_state_to(fsm::ParseNbtFsmState::EndOfFile);
                 break; //TODO Remove
@@ -542,7 +542,7 @@ impl NbtData {
         cursor: &mut Cursor<Vec<u8>>,
         nbt_parent_index: usize,
     ) {
-        new_tag_position.set_byte_end_all(cursor.position() as usize);
+        new_tag_position.set_byte_end_all((cursor.position() - 1) as usize);
         new_tag_position.set_index(*self.nbt_parser.index());
         new_tag_position.set_depth(*self.nbt_parser.tree_depth());
         new_tag_position.set_parent(nbt_parent_index);
@@ -666,7 +666,7 @@ impl NbtData {
             },
             Err(e) => return Err(e),
         };
-        new_tag_position.set_byte_end_id(cursor.position() as usize);
+        new_tag_position.set_byte_end_id((cursor.position() - 1) as usize);
 
         Ok(tag_id)
     }
@@ -681,12 +681,12 @@ impl NbtData {
         //parse NbtTag Name
         new_tag_position.set_byte_start_name(cursor.position() as usize);
         new_nbt_tag.set_name(fsm::parse::nbt_tag_string(cursor)?);
-        new_tag_position.set_byte_end_name(cursor.position() as usize);
+        new_tag_position.set_byte_end_name((cursor.position() - 1) as usize);
 
         //parse NbtTag Value
         new_tag_position.set_byte_start_value(cursor.position() as usize);
         new_nbt_tag.set_value(fsm::parse::nbt_tag(cursor, &tag_id)?);
-        new_tag_position.set_byte_end_value(cursor.position() as usize);
+        new_tag_position.set_byte_end_value((cursor.position() - 1) as usize);
 
         Ok(())
     }

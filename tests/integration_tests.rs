@@ -145,10 +145,10 @@ fn test_bigtest_start_end_bytes_are_continuous() {
 
     for (ii, _) in mc_bin.nbt_tags().iter().enumerate() {
         if ii + 1 == mc_bin.nbt_tags().len() { break; }
-        
+
         curr_pos = mc_bin.nbt_tags()[ii].position().byte_end_all();
         next_pos = mc_bin.nbt_tags()[ii+1].position().byte_start_all();
-        assert_eq!(curr_pos, next_pos);
+        assert_eq!(curr_pos + 1, next_pos);
 
     } 
 }
