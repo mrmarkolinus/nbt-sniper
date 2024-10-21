@@ -162,6 +162,66 @@ fn test_bigtest_nbt_tags_types() {
 }
 
 #[test]
+fn test_bigtest_nbt_tags_depth() {
+    let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
+
+    let nbt_tag_types = vec![
+        0,                              // Level
+            1,                              // longTest
+            1,                              // shortTest
+            1,                              // stringTest
+            1,                              // floatTest
+            1,                              // intTest
+            1,                              // nested compound test
+                2,                              // ham
+                    3,                              // name
+                    3,                              // value
+                    3,                              //
+                2,                              // egg
+                    3,                              // name
+                    3,                              // value
+                    3,                              //
+                2,                              //
+            1,                              // listTest (long)
+                2,                              //
+                2,                              //
+                2,                              //
+                2,                              //
+                2,                              //
+            1,                              // listTest (compound)
+                2,                              //
+                    3,                              // name
+                    3,                              // created-on
+                    3,                              //
+                2,                              //
+                    3,                              // name
+                    3,                            // created-on
+                    3,                            // ListCompoundListTest
+                        4,                          //
+                            5,                          // F1
+                            5,                          // B1
+                            5,                          //
+                        4,                          //
+                            5,                          // 56
+                            5,                          // 42
+                            5,                          // ListCompoundListCompoundListTest
+                                6,                          //
+                                6,                          //       
+                            5,                          //
+                    3,                          //
+            1,                              // byteTest
+            1,                              // byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))
+            1,                              // doubleTest
+            1,                              //
+    ];
+
+    for (ii, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
+        println!("{}: {}", ii, nbttag.position().depth());
+        assert_eq!(nbttag.position().depth(), nbt_tag_types[ii]);
+    }
+}
+
+#[test]
 fn test_bigtest_start_end_bytes_are_continuous() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
     //let mut last_byte_position = -1;
