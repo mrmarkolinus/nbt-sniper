@@ -18,16 +18,6 @@ pub enum NbtFileError {
     JsonWriteFailure, // Custom error for content validation
 }
 
-pub trait AsRawBytes {
-    fn as_raw_bytes(&self) -> &[u8];
-}
-
-impl AsRawBytes for NbtFile {
-    fn as_raw_bytes(&self) -> &[u8] {
-        self.nbtdata.raw_bytes()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct NbtFile {
     file_path: String,
@@ -51,6 +41,10 @@ impl NbtFile {
 
     pub fn nbt_tags(&self) -> &Vec<nbt::NbtTag> {
         &self.nbtdata.nbt_tags()
+    }
+
+    pub fn as_raw_bytes(&self) -> &Vec<u8> {
+        &self.nbtdata.raw_bytes()
     }
 
     pub fn nbt_hashmap(&self) -> &HashMap<String, usize> {

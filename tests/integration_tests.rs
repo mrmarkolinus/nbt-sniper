@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use nbtsniper::{nbt, NbtFile, AsRawBytes};
+use nbtsniper::{nbt, NbtFile};
 
 #[test]
 fn bigtest() {
