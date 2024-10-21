@@ -8,7 +8,7 @@ fn bigtest() {
 
     println!("-------------------------");
     println!("Debug Output");
-    mc_bin.format_output();
+    print!("{:?}\n", mc_bin);
 
     println!("");
     println!("-------------------------");

@@ -1,7 +1,7 @@
 use flate2::read::GzDecoder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Write;
+use std::fmt::{Debug, Write};
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
@@ -18,10 +18,50 @@ pub enum NbtFileError {
     JsonWriteFailure, // Custom error for content validation
 }
 
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[derive( Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct NbtFile {
     file_path: String,
     nbtdata: nbt::NbtData,
+}
+
+impl Debug for NbtFile {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+
+        for nbttag in self.nbtdata.nbt_tags() {
+            for _ in 0..nbttag.position().depth() {
+                write!(f, "   ")?;
+            }
+            
+            let nbttag_value = nbttag.value();
+            let tag_name = nbttag.name();
+
+            match nbttag_value {
+                nbt::NbtTagType::End(_) => write!(f,"End - {}", tag_name)?,
+                nbt::NbtTagType::Byte(x) => write!(f,"{}[Byte]: {}", tag_name, x)?,
+                nbt::NbtTagType::Short(x) => write!(f,"{}[Short]: {}", tag_name, x)?,
+                nbt::NbtTagType::Int(x) => write!(f,"{}[Int]: {}", tag_name, x)?,
+                nbt::NbtTagType::Long(x) => write!(f,"{}[Long]: {}", tag_name, x)?,
+                nbt::NbtTagType::Float(x) => write!(f,"{}[Float]: {}", tag_name, x)?,
+                nbt::NbtTagType::Double(x) => write!(f,"{}[Double]: {}", tag_name, x)?,
+                nbt::NbtTagType::ByteArray(_) => write!(f,"{}[ByteArray]: [Values... see dump]", tag_name)?,
+                nbt::NbtTagType::String(x) => write!(f,"{}[String]: {:?}", tag_name, x)?,
+                nbt::NbtTagType::List(x) => write!(f,"{}[List]: {:?}", tag_name, x)?,
+                nbt::NbtTagType::Compound(_) => write!(f,"{}[Compound]: ", tag_name)?,
+                nbt::NbtTagType::IntArray(_) => write!(f,"{}[IntArray]: [Values... see dump]", tag_name)?,
+                nbt::NbtTagType::LongArray(_) => write!(f,"{}[LongArray]: [Values... see dump]", tag_name)?
+            }
+            writeln!(f)?;
+            
+            let formatted_raw_bytes = NbtFile::formatted_raw_values(nbttag, self.as_raw_bytes());
+
+            writeln!(f, "{}", formatted_raw_bytes)?;
+
+            writeln!(f)?;
+        }
+        
+        Ok(())
+    }
+
 }
 
 impl NbtFile {
@@ -51,6 +91,21 @@ impl NbtFile {
         &self.nbtdata.tags_map()
     }
 
+/*     pub fn format_output(&self) {
+        for nbttag in self.nbtdata.nbt_tags() {
+            for _ in 0..nbttag.position().depth() {
+                print!("   ");
+            }
+            Self::display_tag(nbttag, &self.nbtdata.raw_bytes());
+
+            println!();
+        }
+    } */
+
+    pub fn hex_dump(&self) -> String {
+        Self::formatted_raw_bytes(self.nbtdata.raw_bytes(), 0)
+    }
+
     fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
         // Open the file and create a buffered reader for efficient reading
         let file = fs::File::open(file_path)?;
@@ -63,22 +118,9 @@ impl NbtFile {
         Ok(decompressed_data)
     }
 
-    pub fn format_output(&self) {
-        for nbttag in self.nbtdata.nbt_tags() {
-            for _ in 0..nbttag.position().depth() {
-                print!("   ");
-            }
-            Self::display_tag(nbttag, &self.nbtdata.raw_bytes());
+    
 
-            println!();
-        }
-    }
-
-    pub fn hex_dump(&self) -> String {
-        Self::format_output_raw(self.nbtdata.raw_bytes(), 0)
-    }
-
-    fn display_tag(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
+/*     fn display_tag(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
         let nbttag_value = nbttag.value();
         let tag_name = nbttag.name();
 
@@ -104,14 +146,17 @@ impl NbtFile {
         println!("");
 
         Self::display_raw_values(nbttag, rawbytes);
-    }
+    } */
 
-    fn display_raw_values(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) {
+    fn formatted_raw_values(nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) -> String {
+        
+        let mut formatted_str = String::new();
+        
         for _ in 0..nbttag.position().depth() {
-            print!("   ");
+            write!(formatted_str, "   ");
         }
-        print!("Raw Bytes: ");
-        print!(
+        write!(formatted_str,"Raw Bytes: ");
+        write!(formatted_str,
             "ID[{}:{}] ",
             match nbttag.position().byte_start_id() {
                 Some(x) => x.to_string(),
@@ -122,7 +167,7 @@ impl NbtFile {
                 None => "N/A".to_string(),
             }
         );
-        print!(
+        write!(formatted_str,
             "Name[{}:{}] ",
             match nbttag.position().byte_start_name() {
                 Some(x) => x.to_string(),
@@ -148,7 +193,7 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                println!("Value[{}:{}]", byte_start, byte_end);
+                write!(formatted_str,"Value[{}:{}]", byte_start, byte_end);
             }
             nbt::NbtTagType::List(_x) => {
                 if let Some(x) = nbttag.position().byte_start_value() {
@@ -158,13 +203,13 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                println!("Value[{}:{}]", byte_start, byte_end);
+                write!(formatted_str,"Value[{}:{}]", byte_start, byte_end);
             }
             nbt::NbtTagType::End(_x) => {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                println!("Value[{}]", "N/A");
+                write!(formatted_str,"Value[{}]", "N/A");
             }
             _ => {
                 if let Some(x) = nbttag.position().byte_start_value() {
@@ -178,20 +223,23 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                println!("Value[{}:{}]", byte_start, byte_end);
+                write!(formatted_str,"Value[{}:{}]", byte_start, byte_end);
             }
         }
 
         let dump_hex = &rawbytes[byte_start_dump..byte_end_dump];
 
         for _ in 0..nbttag.position().depth() {
-            print!("   ");
+            write!(formatted_str,"   ");
         }
-        println!("Hex Dump[{}:{}]", byte_start_dump, byte_end_dump);
-        Self::format_output_raw(dump_hex, nbttag.position().depth());
+        write!(formatted_str, "Hex Dump[{}:{}]", byte_start_dump, byte_end_dump);
+        
+        let formatted_raw_bytes = Self::formatted_raw_bytes(dump_hex, nbttag.position().depth());
+        
+        format!("{formatted_str}{formatted_raw_bytes}")
     }
 
-    fn format_output_raw(rawbytes: &[u8], depth: i64) -> String {
+    fn formatted_raw_bytes(rawbytes: &[u8], depth: i64) -> String {
         let mut output = String::new();
 
         for _ in 0..depth {
