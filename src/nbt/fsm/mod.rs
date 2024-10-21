@@ -29,6 +29,14 @@ impl NbtListParser {
         }
     }
 
+    pub fn list_elem_count(&self) -> i32 {
+        self.list_elem_count
+    }
+
+    pub fn list_len(&self) -> i32 {
+        self.list_len
+    }
+
     pub fn set_id(&mut self, tag_id: nbt::NbtTagId) {
         self.list_tag_id = tag_id;
     }
@@ -86,10 +94,6 @@ impl NbtParser {
         &self.state
     }
 
-    /* pub fn cursor(&mut self) -> Cursor<Vec<u8>> {
-        self.cursor.clone() //TODO: use &mut self.cursor
-    } */
-
     pub fn index(&self) -> &usize {
         &self.index
     }
@@ -104,6 +108,14 @@ impl NbtParser {
 
     pub fn increment_index(&mut self) {
         self.index = self.index + 1;
+    }
+
+    pub fn list_index(&self) -> i32 {
+        self.list_parser.list_elem_count()
+    }
+
+    pub fn list_len(&self) -> i32 {
+        self.list_parser.list_len()
     }
 
     pub fn switch_list_ctx(&mut self) {

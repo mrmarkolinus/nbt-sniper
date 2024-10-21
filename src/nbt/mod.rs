@@ -28,6 +28,9 @@ pub enum NbtReadError {
     #[error("Invalid NBT List lenght")]
     InvalidNbtListLenght, // if list is longer than MAX_LIST_LENGTH
 
+    #[error("NBT List longer than declared")]
+    NbtListLongerThanDeclared, // if list is longer than the size read in the NBT file
+
     #[error("Invalid NBT ByteArray lenght")]
     InvalidNbtByteArrayLenght, // if array is longer than MAX_BYTE_ARRAY_LENGTH
 
@@ -642,6 +645,10 @@ impl NbtData {
                 depth_delta -= 1
             }
         } else {
+
+            if (self.nbt_parser.list_index() >= MAX_LIST_LENGTH - 1) || (self.nbt_parser.list_index() >= self.nbt_parser.list_len() - 1) {
+                return Err(NbtReadError::NbtListLongerThanDeclared);
+            }
             self.nbt_parser.increment_list_index();
 
             if let NbtTagId::Compound = tag_id {
