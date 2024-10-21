@@ -18,11 +18,11 @@ pub fn nbt_tag_id(
 
 pub fn nbt_tag_string(cursor: &mut Cursor<Vec<u8>>) -> Result<String, nbt::NbtReadError> {
     let name_len = cursor.read_i16::<BigEndian>()?;
-    
+
     if name_len < 0 {
         return Err(nbt::NbtReadError::NegativeNbtTagLenght);
     }
-    
+
     let mut name = String::with_capacity(name_len as usize);
 
     for _ in 0..name_len {
@@ -305,7 +305,7 @@ mod tests {
     #[test]
     fn test_nbt_tag_short() {
         let data = vec![0u8, 42u8];
-        let cursor = make_cursor(data); 
+        let cursor = make_cursor(data);
         // i16::from_be_bytes([0x00, 0x2A]) = 42
         let mut cursor = cursor;
         let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Short).unwrap();
@@ -337,9 +337,9 @@ mod tests {
         assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
     }
 
-      #[test]
+    #[test]
     fn test_nbt_tag_long() {
-        let data = vec![0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,42u8];
+        let data = vec![0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 42u8];
         let cursor = make_cursor(data); // 42
         let mut cursor = cursor;
         let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Long).unwrap();
@@ -482,18 +482,18 @@ mod tests {
     }
 
     #[test]
-    fn test_nbt_tag_list_panic_large_length_defined() -> Result<(), nbt::NbtReadError>{
+    fn test_nbt_tag_list_panic_large_length_defined() -> Result<(), nbt::NbtReadError> {
         // List tag with length > 65536
         let mut data = Vec::new();
         data.push(1u8); // List element tag_id = Byte
-        
+
         let bad_list_len = 65_537i32;
         let high_byte = (bad_list_len >> 8) as u8; // Get the higher 8 bits
         let low_byte = (bad_list_len & 0xFF) as u8; // Get the lower 8 bits
         data.push(high_byte);
         data.push(low_byte);
         data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
-        
+
         let cursor = make_cursor(data);
         let mut cursor = cursor;
         assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());
@@ -506,7 +506,7 @@ mod tests {
         // List tag with length > 65536
         let mut data = Vec::new();
         data.push(1u8); // List element tag_id = Byte
-        
+
         let bad_list_len = 65_530i32; // List len is defined smaller than 65536
         let high_byte = (bad_list_len >> 8) as u8; // Get the higher 8 bits
         let low_byte = (bad_list_len & 0xFF) as u8; // Get the lower 8 bits
@@ -514,7 +514,7 @@ mod tests {
         data.push(low_byte);
         //but the real list length is 65_537
         data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
-        
+
         let cursor = make_cursor(data);
         let mut cursor = cursor;
         assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());

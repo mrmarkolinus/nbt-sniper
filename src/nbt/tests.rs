@@ -411,7 +411,7 @@ mod tests {
         assert_eq!(end_tag.position().parent(), 0);
     }
 
-     #[test] 
+    #[test]
     fn test_nbt_data_parse_list_of_strings() {
         // Create a buffer representing a List tag containing Strings
         // Structure:
@@ -462,7 +462,7 @@ mod tests {
         let string2 = &nbt_data.nbt_tags()[3];
         assert_eq!(string2.value(), &NbtTagType::String("World".to_string()));
         assert_eq!(string2.position().parent(), 1);
-    } 
+    }
 
     // Additional tests can be added here to cover more scenarios, such as:
     // - Parsing ByteArray, IntArray, LongArray

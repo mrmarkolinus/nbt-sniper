@@ -47,7 +47,7 @@ pub enum NbtReadError {
     NegativeNbtTagLenght, // if tag length is negative
 
     #[error("NBT file is empty")]
-    EmptyFile // if file is empty
+    EmptyFile, // if file is empty
 }
 
 #[derive(
@@ -645,8 +645,9 @@ impl NbtData {
                 depth_delta -= 1
             }
         } else {
-
-            if (self.nbt_parser.list_index() >= MAX_LIST_LENGTH - 1) || (self.nbt_parser.list_index() >= self.nbt_parser.list_len() - 1) {
+            if (self.nbt_parser.list_index() >= MAX_LIST_LENGTH - 1)
+                || (self.nbt_parser.list_index() >= self.nbt_parser.list_len() - 1)
+            {
                 return Err(NbtReadError::NbtListLongerThanDeclared);
             }
             self.nbt_parser.increment_list_index();

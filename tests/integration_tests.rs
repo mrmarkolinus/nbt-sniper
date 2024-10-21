@@ -75,6 +75,19 @@ fn test_bigtest_nbt_tags_names() {
                 "",
                     "name",
                     "created-on",
+                    "ListCompoundListTest",
+                        "",
+                            "F1",
+                            "B1",
+                            "",
+                        "",
+                            "56",
+                            "42",
+                            "ListCompoundListCompoundListTest",
+                                "",
+                                "",
+                            "",
+                        
                     "",
             "byteTest",
             "byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))",
@@ -93,41 +106,53 @@ fn test_bigtest_nbt_tags_types() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
 
     let nbt_tag_types = vec![
-        nbt::NbtTagId::Compound,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::Short,
-        nbt::NbtTagId::String,
-        nbt::NbtTagId::Float,
-        nbt::NbtTagId::Int,
-        nbt::NbtTagId::Compound,
-        nbt::NbtTagId::Compound,
-        nbt::NbtTagId::String,
-        nbt::NbtTagId::Float,
-        nbt::NbtTagId::End,
-        nbt::NbtTagId::Compound,
-        nbt::NbtTagId::String,
-        nbt::NbtTagId::Float,
-        nbt::NbtTagId::End,
-        nbt::NbtTagId::End,
-        nbt::NbtTagId::List,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::List,
-        nbt::NbtTagId::Compound,
-        nbt::NbtTagId::String,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::End,
-        nbt::NbtTagId::Compound,
-        nbt::NbtTagId::String,
-        nbt::NbtTagId::Long,
-        nbt::NbtTagId::End,
-        nbt::NbtTagId::Byte,
-        nbt::NbtTagId::ByteArray,
-        nbt::NbtTagId::Double,
-        nbt::NbtTagId::End,
+        nbt::NbtTagId::Compound,                        // Level
+            nbt::NbtTagId::Long,                            // longTest
+            nbt::NbtTagId::Short,                           // shortTest
+            nbt::NbtTagId::String,                          // stringTest
+            nbt::NbtTagId::Float,                           // floatTest
+            nbt::NbtTagId::Int,                             // intTest
+            nbt::NbtTagId::Compound,                        // nested compound test
+                nbt::NbtTagId::Compound,                        // ham
+                    nbt::NbtTagId::String,                          // name
+                    nbt::NbtTagId::Float,                           // value
+                    nbt::NbtTagId::End,                             //
+                nbt::NbtTagId::Compound,                        // egg
+                    nbt::NbtTagId::String,                          // name
+                    nbt::NbtTagId::Float,                           // value
+                    nbt::NbtTagId::End,                             //
+                nbt::NbtTagId::End,                             //
+            nbt::NbtTagId::List,                            // listTest (long)
+                nbt::NbtTagId::Long,                            //
+                nbt::NbtTagId::Long,                            //
+                nbt::NbtTagId::Long,                            //
+                nbt::NbtTagId::Long,                            //
+                nbt::NbtTagId::Long,                            //
+            nbt::NbtTagId::List,                            // listTest (compound)
+                nbt::NbtTagId::Compound,                        //
+                    nbt::NbtTagId::String,                          // name
+                    nbt::NbtTagId::Long,                            // created-on
+                    nbt::NbtTagId::End,                             //
+                nbt::NbtTagId::Compound,                        //
+                    nbt::NbtTagId::String,                          // name
+                    nbt::NbtTagId::Long,                            // created-on
+                    nbt::NbtTagId::List,                            // ListCompoundListTest
+                        nbt::NbtTagId::Compound,                        //
+                            nbt::NbtTagId::Float,                           // F1
+                            nbt::NbtTagId::Byte,                            // B1
+                            nbt::NbtTagId::End,                             //
+                        nbt::NbtTagId::Compound,                        //
+                            nbt::NbtTagId::Int,                             // 56
+                            nbt::NbtTagId::Long,                            // 42
+                            nbt::NbtTagId::List,                            // ListCompoundListCompoundListTest
+                                nbt::NbtTagId::ByteArray,                       //
+                                nbt::NbtTagId::ByteArray,                       //       
+                            nbt::NbtTagId::End,                             //
+                    nbt::NbtTagId::End,                             //
+            nbt::NbtTagId::Byte,                            // byteTest
+            nbt::NbtTagId::ByteArray,                       // byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))
+            nbt::NbtTagId::Double,                          // doubleTest
+            nbt::NbtTagId::End,                             //
     ];
 
     for (ii, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
