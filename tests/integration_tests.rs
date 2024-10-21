@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use nbtsniper::{nbt, NbtFile};
+use nbtsniper::{nbt, NbtFile, AsRawBytes};
 
 #[test]
 fn bigtest() {
@@ -37,7 +37,7 @@ fn bigtest() {
     println!("");
     println!("-------------------------");
     println!("Raw data using as_bytes() method");
-    println!("{:?}\n", mc_bin.as_bytes());
+    println!("{:?}\n", mc_bin.as_raw_bytes());
 }
 
 #[test]
