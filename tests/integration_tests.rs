@@ -15,10 +15,10 @@ fn bigtest() {
     println!("Printing JSON to file");
     mc_bin.to_json("tests/files/output/out_bigtest.json");
 
-    println!("");
+    /* println!("");
     println!("-------------------------");
     println!("Raw data using dump_hex() method");
-    print!("{}\n", mc_bin.hex_dump());
+    print!("{}\n", mc_bin.hex_dump()); */
 
     println!("");
     println!("-------------------------");
