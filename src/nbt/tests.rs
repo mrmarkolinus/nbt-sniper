@@ -94,12 +94,12 @@ mod tests {
         assert_eq!(pos.byte_start_all(), 0);
         assert_eq!(pos.byte_end_all(), 0);
         assert_eq!(pos.byte_end_all_with_children(), 0);
-        assert_eq!(pos.byte_start_id(), 0);
-        assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_id(), None);
+        assert_eq!(pos.byte_end_id(), None);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
     }
 
     #[test]
@@ -118,12 +118,12 @@ mod tests {
         assert_eq!(pos.byte_start_all(), 10);
         assert_eq!(pos.byte_end_all(), 20);
         assert_eq!(pos.byte_end_all_with_children(), 30);
-        assert_eq!(pos.byte_start_id(), 40);
-        assert_eq!(pos.byte_end_id(), 50);
-        assert_eq!(pos.byte_start_name(), 60);
-        assert_eq!(pos.byte_end_name(), 70);
-        assert_eq!(pos.byte_start_value(), 80);
-        assert_eq!(pos.byte_end_value(), 90);
+        assert_eq!(pos.byte_start_id(), Some(40));
+        assert_eq!(pos.byte_end_id(), Some(50));
+        assert_eq!(pos.byte_start_name(), Some(60));
+        assert_eq!(pos.byte_end_name(), Some(70));
+        assert_eq!(pos.byte_start_value(), Some(80));
+        assert_eq!(pos.byte_end_value(), Some(90));
     }
 
     #[test]
@@ -144,12 +144,12 @@ mod tests {
         assert_eq!(pos.byte_start_all(), 0);
         assert_eq!(pos.byte_end_all(), 0);
         assert_eq!(pos.byte_end_all_with_children(), 0);
-        assert_eq!(pos.byte_start_id(), 0);
-        assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_id(), None);
+        assert_eq!(pos.byte_end_id(), None);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
     }
 
     // Tests for NbtTagPosition
@@ -159,12 +159,12 @@ mod tests {
         assert_eq!(pos.byte_start_all(), 0);
         assert_eq!(pos.byte_end_all(), 0);
         assert_eq!(pos.byte_end_all_with_children(), 0);
-        assert_eq!(pos.byte_start_id(), 0);
-        assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_id(), None);
+        assert_eq!(pos.byte_end_id(), None);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
         assert_eq!(pos.index(), 0);
         assert_eq!(pos.depth(), 0);
         assert_eq!(pos.parent(), 0);
@@ -190,12 +190,12 @@ mod tests {
         assert_eq!(pos.byte_start_all(), 100);
         assert_eq!(pos.byte_end_all(), 200);
         assert_eq!(pos.byte_end_all_with_children(), 300);
-        assert_eq!(pos.byte_start_id(), 400);
-        assert_eq!(pos.byte_end_id(), 500);
-        assert_eq!(pos.byte_start_name(), 600);
-        assert_eq!(pos.byte_end_name(), 700);
-        assert_eq!(pos.byte_start_value(), 800);
-        assert_eq!(pos.byte_end_value(), 900);
+        assert_eq!(pos.byte_start_id(), Some(400));
+        assert_eq!(pos.byte_end_id(), Some(500));
+        assert_eq!(pos.byte_start_name(), Some(600));
+        assert_eq!(pos.byte_end_name(), Some(700));
+        assert_eq!(pos.byte_start_value(), Some(800));
+        assert_eq!(pos.byte_end_value(), Some(900));
         assert_eq!(pos.index(), 1);
         assert_eq!(pos.depth(), 2);
         assert_eq!(pos.parent(), 3);
@@ -223,12 +223,12 @@ mod tests {
         assert_eq!(pos.byte_start_all(), 0);
         assert_eq!(pos.byte_end_all(), 0);
         assert_eq!(pos.byte_end_all_with_children(), 0);
-        assert_eq!(pos.byte_start_id(), 0);
-        assert_eq!(pos.byte_end_id(), 0);
-        assert_eq!(pos.byte_start_name(), 0);
-        assert_eq!(pos.byte_end_name(), 0);
-        assert_eq!(pos.byte_start_value(), 0);
-        assert_eq!(pos.byte_end_value(), 0);
+        assert_eq!(pos.byte_start_id(), None);
+        assert_eq!(pos.byte_end_id(), None);
+        assert_eq!(pos.byte_start_name(), None);
+        assert_eq!(pos.byte_end_name(), None);
+        assert_eq!(pos.byte_start_value(), None);
+        assert_eq!(pos.byte_end_value(), None);
         assert_eq!(pos.index(), 0);
         assert_eq!(pos.depth(), 0);
         assert_eq!(pos.parent(), 0);
@@ -273,9 +273,7 @@ mod tests {
     fn test_nbt_data_from_buf_empty() {
         let buffer = vec![];
         let result = NbtData::from_buf(buffer);
-        assert!(result.is_ok());
-        let nbt_data = result.unwrap();
-        assert!(nbt_data.nbt_tags().is_empty());
+        assert!(result.is_err());
     }
 
     #[test]
@@ -300,6 +298,12 @@ mod tests {
         // Int Value: 42 (i32 big endian)
 
         let mut buffer = Vec::new();
+
+        // Compound Tag
+        buffer.push(NbtTagId::Compound.into_u8());
+        buffer.extend(&8u16.to_be_bytes()); // Name length
+        buffer.extend("Compound".as_bytes());
+
         buffer.push(NbtTagId::Int.into_u8());
 
         // Name length: 4
@@ -311,9 +315,12 @@ mod tests {
         // Int value: 42
         buffer.extend(&42i32.to_be_bytes());
 
+        // End Tag
+        buffer.push(NbtTagId::End.into_u8());
+
         let nbt_data = NbtData::from_buf(buffer).unwrap();
-        assert_eq!(nbt_data.nbt_tags().len(), 1);
-        let tag = &nbt_data.nbt_tags()[0];
+        assert_eq!(nbt_data.nbt_tags().len(), 3);
+        let tag = &nbt_data.nbt_tags()[1];
         assert_eq!(tag.name(), "Test");
         assert_eq!(tag.value(), &NbtTagType::Int(42));
     }
@@ -325,6 +332,11 @@ mod tests {
         // 2. String tag with name "B" and value "Hello"
 
         let mut buffer = Vec::new();
+
+        // Compound Tag
+        buffer.push(NbtTagId::Compound.into_u8());
+        buffer.extend(&8u16.to_be_bytes()); // Name length
+        buffer.extend("Compound".as_bytes());
 
         // First Tag: Byte
         buffer.push(NbtTagId::Byte.into_u8());
@@ -339,14 +351,17 @@ mod tests {
         buffer.extend(&5u16.to_be_bytes()); // String length
         buffer.extend("Hello".as_bytes());
 
-        let nbt_data = NbtData::from_buf(buffer).unwrap();
-        assert_eq!(nbt_data.nbt_tags().len(), 2);
+        // End Tag
+        buffer.push(NbtTagId::End.into_u8());
 
-        let tag1 = &nbt_data.nbt_tags()[0];
+        let nbt_data = NbtData::from_buf(buffer).unwrap();
+        assert_eq!(nbt_data.nbt_tags().len(), 4);
+
+        let tag1 = &nbt_data.nbt_tags()[1];
         assert_eq!(tag1.name(), "A");
         assert_eq!(tag1.value(), &NbtTagType::Byte(1));
 
-        let tag2 = &nbt_data.nbt_tags()[1];
+        let tag2 = &nbt_data.nbt_tags()[2];
         assert_eq!(tag2.name(), "B");
         assert_eq!(tag2.value(), &NbtTagType::String("Hello".to_string()));
     }
@@ -365,7 +380,7 @@ mod tests {
 
         // Compound Tag
         buffer.push(NbtTagId::Compound.into_u8());
-        buffer.extend(&6u16.to_be_bytes()); // Name length
+        buffer.extend(&8u16.to_be_bytes()); // Name length
         buffer.extend("Compound".as_bytes());
 
         // Nested Int Tag
@@ -400,6 +415,7 @@ mod tests {
     fn test_nbt_data_parse_list_of_strings() {
         // Create a buffer representing a List tag containing Strings
         // Structure:
+        // [Root Compound]
         // [List Tag ID][Name Length][Name][List Element Type][List Length]
         // [String 1]
         // [String 2]
@@ -407,6 +423,11 @@ mod tests {
         // [End Tag ID]
 
         let mut buffer = Vec::new();
+
+        // Compound Tag
+        buffer.push(NbtTagId::Compound.into_u8());
+        buffer.extend(&8u16.to_be_bytes()); // Name length
+        buffer.extend("Compound".as_bytes());
 
         // List Tag
         buffer.push(NbtTagId::List.into_u8());
@@ -423,21 +444,24 @@ mod tests {
         buffer.extend(&5u16.to_be_bytes()); // String length
         buffer.extend("World".as_bytes());
 
-        let nbt_data = NbtData::from_buf(buffer).unwrap();
-        assert_eq!(nbt_data.nbt_tags().len(), 3);
+        // End Tag
+        buffer.push(NbtTagId::End.into_u8());
 
-        let list_tag = &nbt_data.nbt_tags()[0];
+        let nbt_data = NbtData::from_buf(buffer).unwrap();
+        assert_eq!(nbt_data.nbt_tags().len(), 5);
+
+        let list_tag = &nbt_data.nbt_tags()[1];
         assert_eq!(list_tag.name(), "List");
         assert_eq!(list_tag.value(), &NbtTagType::List((NbtTagId::String, 2)));
         //assert_eq!(list_tag.position().children().len(), 2); TODO: Not implemented
 
-        let string1 = &nbt_data.nbt_tags()[1];
+        let string1 = &nbt_data.nbt_tags()[2];
         assert_eq!(string1.value(), &NbtTagType::String("Hello".to_string()));
-        assert_eq!(string1.position().parent(), 0);
+        assert_eq!(string1.position().parent(), 1);
 
-        let string2 = &nbt_data.nbt_tags()[2];
+        let string2 = &nbt_data.nbt_tags()[3];
         assert_eq!(string2.value(), &NbtTagType::String("World".to_string()));
-        assert_eq!(string2.position().parent(), 0);
+        assert_eq!(string2.position().parent(), 1);
     }
 
     // Additional tests can be added here to cover more scenarios, such as:

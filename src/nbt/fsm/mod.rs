@@ -5,15 +5,16 @@ use crate::nbt;
 pub mod parse;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
-pub enum ParseNbtFsm {
+pub enum ParseNbtFsmState {
     #[default]
+    NbtRoot,
     Normal,
     List,
     EndOfFile,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
-pub struct NbtListParser {
+struct NbtListParser {
     list_tag_id: nbt::NbtTagId,
     list_len: i32,
     list_elem_count: i32,
@@ -26,6 +27,14 @@ impl NbtListParser {
             list_len: 0,
             list_elem_count: 0,
         }
+    }
+
+    pub fn list_elem_count(&self) -> i32 {
+        self.list_elem_count
+    }
+
+    pub fn list_len(&self) -> i32 {
+        self.list_len
     }
 
     pub fn set_id(&mut self, tag_id: nbt::NbtTagId) {
@@ -57,9 +66,9 @@ impl NbtListParser {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, Serialize, Deserialize)]
 pub struct NbtParser {
-    state: ParseNbtFsm,
-    pub list_parser: NbtListParser,
-    pub unfinished_lists: Vec<NbtListParser>,
+    state: ParseNbtFsmState,
+    list_parser: NbtListParser,
+    unfinished_lists: Vec<NbtListParser>,
     //cursor: &'a mut Cursor<Vec<u8>>,
     index: usize,
     tree_depth: i64,
@@ -68,7 +77,7 @@ pub struct NbtParser {
 impl NbtParser {
     pub fn new() -> NbtParser {
         NbtParser {
-            state: ParseNbtFsm::default(),
+            state: ParseNbtFsmState::default(),
             list_parser: NbtListParser::new(),
             unfinished_lists: Vec::<NbtListParser>::new(),
             //cursor: cursor,
@@ -77,17 +86,13 @@ impl NbtParser {
         }
     }
 
-    pub fn change_state_to(&mut self, state: ParseNbtFsm) {
+    pub fn change_state_to(&mut self, state: ParseNbtFsmState) {
         self.state = state;
     }
 
-    pub fn state(&self) -> &ParseNbtFsm {
+    pub fn state(&self) -> &ParseNbtFsmState {
         &self.state
     }
-
-    /* pub fn cursor(&mut self) -> Cursor<Vec<u8>> {
-        self.cursor.clone() //TODO: use &mut self.cursor
-    } */
 
     pub fn index(&self) -> &usize {
         &self.index
@@ -103,6 +108,60 @@ impl NbtParser {
 
     pub fn increment_index(&mut self) {
         self.index = self.index + 1;
+    }
+
+    pub fn list_index(&self) -> i32 {
+        self.list_parser.list_elem_count()
+    }
+
+    pub fn list_len(&self) -> i32 {
+        self.list_parser.list_len()
+    }
+
+    pub fn switch_list_ctx(&mut self) {
+        let list_parser = self.list_parser.clone();
+        self.unfinished_lists.push(list_parser);
+        self.list_parser.reset();
+    }
+
+    pub fn restore_list_ctx(&mut self) -> bool {
+        match self.unfinished_lists.pop() {
+            //the list of compounds was not yet finished, restore the ctx
+            Some(previous_list_parser) => {
+                self.list_parser = previous_list_parser;
+                true
+            }
+            // the list of compounds was finished and we do not need to restore the ctx
+            // only in this case we will have a depth_delta of -2 because
+            // compound is finished (=-1) and the list as well (=-1)
+            None => false,
+        }
+    }
+
+    // Delegating NbtListParser methods to NbtParser
+
+    pub fn set_list_tag_id(&mut self, tag_id: nbt::NbtTagId) {
+        self.list_parser.set_id(tag_id);
+    }
+
+    pub fn list_tag_id(&self) -> &nbt::NbtTagId {
+        &self.list_parser.tag_id()
+    }
+
+    pub fn set_list_len(&mut self, len: i32) {
+        self.list_parser.set_len(len);
+    }
+
+    pub fn increment_list_index(&mut self) {
+        self.list_parser.increment();
+    }
+
+    pub fn reset_list(&mut self) {
+        self.list_parser.reset();
+    }
+
+    pub fn is_list_end(&self) -> bool {
+        self.list_parser.is_end()
     }
 }
 
@@ -231,8 +290,8 @@ mod tests {
     fn test_nbt_parser_new() {
         let parser = NbtParser::new();
         match parser.state {
-            ParseNbtFsm::Normal => (),
-            _ => panic!("Initial state should be Normal"),
+            ParseNbtFsmState::NbtRoot => (),
+            _ => panic!("Initial state should be NbtRoot"),
         }
         assert_eq!(parser.list_parser.list_tag_id, NbtTagId::End);
         assert!(parser.unfinished_lists.is_empty());
@@ -243,15 +302,15 @@ mod tests {
     #[test]
     fn test_nbt_parser_change_state_to() {
         let mut parser = NbtParser::new();
-        parser.change_state_to(ParseNbtFsm::List);
+        parser.change_state_to(ParseNbtFsmState::List);
         match parser.state {
-            ParseNbtFsm::List => (),
+            ParseNbtFsmState::List => (),
             _ => panic!("State should be List"),
         }
 
-        parser.change_state_to(ParseNbtFsm::EndOfFile);
+        parser.change_state_to(ParseNbtFsmState::EndOfFile);
         match parser.state {
-            ParseNbtFsm::EndOfFile => (),
+            ParseNbtFsmState::EndOfFile => (),
             _ => panic!("State should be EndOfFile"),
         }
     }

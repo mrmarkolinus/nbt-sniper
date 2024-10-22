@@ -1,5 +1,4 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use core::panic;
 use std::io::Cursor;
 
 use crate::nbt;
@@ -19,6 +18,11 @@ pub fn nbt_tag_id(
 
 pub fn nbt_tag_string(cursor: &mut Cursor<Vec<u8>>) -> Result<String, nbt::NbtReadError> {
     let name_len = cursor.read_i16::<BigEndian>()?;
+
+    if name_len < 0 {
+        return Err(nbt::NbtReadError::NegativeNbtTagLenght);
+    }
+
     let mut name = String::with_capacity(name_len as usize);
 
     for _ in 0..name_len {
@@ -93,8 +97,8 @@ pub fn nbt_tag(
                 Err(e) => return Err(nbt::NbtReadError::Io(e)),
             };
 
-            if len > 65_536 {
-                //TODO error handling
+            if len > nbt::MAX_BYTE_ARRAY_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtByteArrayLenght);
             }
 
             let mut buf = Vec::with_capacity(len as usize);
@@ -125,9 +129,8 @@ pub fn nbt_tag(
             };
 
             let len = cursor.read_i32::<BigEndian>()?;
-            if len > 65_536 {
-                //TODO error handling
-                panic!("List length is too large");
+            if len > nbt::MAX_LIST_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtListLenght);
             }
             nbt::NbtTagType::List((list_elem_tag_ids, len))
         }
@@ -136,9 +139,8 @@ pub fn nbt_tag(
 
         nbt::NbtTagId::IntArray => {
             let len = cursor.read_i32::<BigEndian>()?;
-            if len > 65_536 {
-                //TODO error handling
-                panic!("Array length is too large");
+            if len > nbt::MAX_INT_ARRAY_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtIntArrayLenght);
             }
 
             let mut buf = Vec::with_capacity(len as usize);
@@ -151,9 +153,8 @@ pub fn nbt_tag(
         }
         nbt::NbtTagId::LongArray => {
             let len = cursor.read_i32::<BigEndian>()?;
-            if len > 65_536 {
-                //TODO error handling
-                panic!("Array length is too large");
+            if len > nbt::MAX_LONG_ARRAY_LENGTH {
+                return Err(nbt::NbtReadError::InvalidNbtLongArrayLenght);
             }
 
             let mut buf = Vec::with_capacity(len as usize);
@@ -245,7 +246,7 @@ mod tests {
     }
 
     #[test]
-    fn test_nbt_tag_string_negative_length() {
+    fn test_nbt_tag_string_negative_length() -> Result<(), nbt::NbtReadError> {
         let mut data = Vec::new();
         data.extend(&(-1i16).to_be_bytes()); // name_len = -1
                                              // Since the loop is 0..-1, which is invalid, it will not execute
@@ -261,8 +262,8 @@ mod tests {
                                              // So it will try to read 65535 bytes, which is not present, leading to an error
         let cursor = make_cursor(data);
         let mut cursor = cursor;
-        let result = nbt_tag_string(&mut cursor);
-        assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
+        assert!(nbt_tag_string(&mut cursor).is_err());
+        Ok(())
     }
 
     #[test]
@@ -303,7 +304,9 @@ mod tests {
 
     #[test]
     fn test_nbt_tag_short() {
-        let cursor = make_cursor(2u16.to_be_bytes().to_vec()); // i16::from_be_bytes([0x00, 0x2A]) = 42
+        let data = vec![0u8, 42u8];
+        let cursor = make_cursor(data);
+        // i16::from_be_bytes([0x00, 0x2A]) = 42
         let mut cursor = cursor;
         let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Short).unwrap();
         assert_eq!(result, nbt::NbtTagType::Short(42));
@@ -317,13 +320,14 @@ mod tests {
         assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
     }
 
-    /* #[test]
+    #[test]
     fn test_nbt_tag_int() {
-        let cursor = make_cursor(4i32::to_be_bytes().to_vec()); // 42
+        let data = vec![0u8, 0u8, 0u8, 42u8];
+        let cursor = make_cursor(data); // 42
         let mut cursor = cursor;
         let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Int).unwrap();
         assert_eq!(result, nbt::NbtTagType::Int(42));
-    } */
+    }
 
     #[test]
     fn test_nbt_tag_int_io_error() {
@@ -333,13 +337,14 @@ mod tests {
         assert!(matches!(result, Err(nbt::NbtReadError::Io(_))));
     }
 
-    /*  #[test]
+    #[test]
     fn test_nbt_tag_long() {
-        let cursor = make_cursor(8i64::to_be_bytes().to_vec()); // 42
+        let data = vec![0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 42u8];
+        let cursor = make_cursor(data); // 42
         let mut cursor = cursor;
         let result = nbt_tag(&mut cursor, &nbt::NbtTagId::Long).unwrap();
         assert_eq!(result, nbt::NbtTagType::Long(42));
-    } */
+    }
 
     #[test]
     fn test_nbt_tag_long_io_error() {
@@ -451,17 +456,18 @@ mod tests {
         assert_eq!(result, nbt::NbtTagType::List((nbt::NbtTagId::Byte, 2)));
     }
 
-    /*     #[test]
-    fn test_nbt_tag_list_invalid_tag_id() {
+    #[test]
+    fn test_nbt_tag_list_invalid_tag_id() -> Result<(), nbt::NbtReadError> {
         // List tag: invalid element tag_id
         let mut data = Vec::new();
         data.push(13u8); // Invalid tag_id
         data.extend(&2i32.to_be_bytes()); // length = 2
         let cursor = make_cursor(data);
         let mut cursor = cursor;
-        let result = nbt_tag(&mut cursor, &nbt::NbtTagId::List);
-        assert_eq!(result, Err(nbt::NbtReadError::InvalidContent));
-    } */
+        assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());
+
+        Ok(())
+    }
 
     #[test]
     fn test_nbt_tag_list_io_error_tag_id() {
@@ -476,16 +482,45 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "List length is too large")]
-    fn test_nbt_tag_list_panic_large_length() {
+    fn test_nbt_tag_list_panic_large_length_defined() -> Result<(), nbt::NbtReadError> {
         // List tag with length > 65536
         let mut data = Vec::new();
         data.push(1u8); // List element tag_id = Byte
+
+        let bad_list_len = 65_537i32;
+        let high_byte = (bad_list_len >> 8) as u8; // Get the higher 8 bits
+        let low_byte = (bad_list_len & 0xFF) as u8; // Get the lower 8 bits
+        data.push(high_byte);
+        data.push(low_byte);
         data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+
         let cursor = make_cursor(data);
         let mut cursor = cursor;
-        nbt_tag(&mut cursor, &nbt::NbtTagId::List).unwrap();
+        assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());
+
+        Ok(())
     }
+
+    /* #[test]
+    fn test_nbt_tag_list_panic_large_length_real() -> Result<(), nbt::NbtReadError>{
+        // List tag with length > 65536
+        let mut data = Vec::new();
+        data.push(1u8); // List element tag_id = Byte
+
+        let bad_list_len = 65_530i32; // List len is defined smaller than 65536
+        let high_byte = (bad_list_len >> 8) as u8; // Get the higher 8 bits
+        let low_byte = (bad_list_len & 0xFF) as u8; // Get the lower 8 bits
+        data.push(high_byte);
+        data.push(low_byte);
+        //but the real list length is 65_537
+        data.extend(&(65_537i32).to_be_bytes()); // length = 65_537
+
+        let cursor = make_cursor(data);
+        let mut cursor = cursor;
+        assert!(nbt_tag(&mut cursor, &nbt::NbtTagId::List).is_err());
+
+        Ok(())
+    } */
 
     #[test]
     fn test_nbt_tag_compound() {
