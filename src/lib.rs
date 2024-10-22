@@ -1,7 +1,7 @@
 use flate2::read::GzDecoder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Debug, Error, Write};
+use std::fmt::Debug;
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
@@ -147,12 +147,12 @@ impl NbtFile {
         Self::display_raw_values(nbttag, rawbytes);
     } */
 
-    fn formatted_raw_values(f: &mut std::fmt::Formatter, nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) -> Result<(), Error> {
+    fn formatted_raw_values(f: &mut std::fmt::Formatter, nbttag: &nbt::NbtTag, rawbytes: &Vec<u8>) -> std::fmt::Result {
         
         for _ in 0..nbttag.position().depth() {
-            write!(f, "   ");
+            write!(f, "   ")?;
         }
-        write!(f,"Raw Bytes: ");
+        write!(f,"Raw Bytes: ")?;
         write!(f,
             "ID[{}:{}] ",
             match nbttag.position().byte_start_id() {
@@ -163,7 +163,7 @@ impl NbtFile {
                 Some(x) => x.to_string(),
                 None => "N/A".to_string(),
             }
-        );
+        )?;
         write!(f,
             "Name[{}:{}] ",
             match nbttag.position().byte_start_name() {
@@ -174,7 +174,7 @@ impl NbtFile {
                 Some(x) => x.to_string(),
                 None => "N/A".to_string(),
             }
-        );
+        )?;
 
         let mut byte_start = 0;
         let mut byte_end = 0;
@@ -190,7 +190,7 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                write!(f,"Value[{}:{}]", byte_start, byte_end);
+                write!(f,"Value[{}:{}]", byte_start, byte_end)?;
             }
             nbt::NbtTagType::List(_x) => {
                 if let Some(x) = nbttag.position().byte_start_value() {
@@ -200,13 +200,13 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                write!(f,"Value[{}:{}]", byte_start, byte_end);
+                write!(f,"Value[{}:{}]", byte_start, byte_end)?;
             }
             nbt::NbtTagType::End(_x) => {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                write!(f,"Value[{}]", "N/A");
+                write!(f,"Value[{}]", "N/A")?;
             }
             _ => {
                 if let Some(x) = nbttag.position().byte_start_value() {
@@ -220,45 +220,49 @@ impl NbtFile {
                 byte_start_dump = nbttag.position().byte_start_all();
                 byte_end_dump = nbttag.position().byte_end_all();
 
-                write!(f,"Value[{}:{}]", byte_start, byte_end);
+                write!(f,"Value[{}:{}]", byte_start, byte_end)?;
             }
         }
 
         let dump_hex = &rawbytes[byte_start_dump..byte_end_dump];
 
         for _ in 0..nbttag.position().depth() {
-            write!(f,"   ");
+            write!(f,"   ")?;
         }
-        write!(f, "Hex Dump[{}:{}]", byte_start_dump, byte_end_dump);
+        write!(f, "Hex Dump[{}:{}]", byte_start_dump, byte_end_dump)?;
         
-        Self::formatted_raw_bytes(f, dump_hex, nbttag.position().depth())
+        Self::formatted_raw_bytes(f, dump_hex, nbttag.position().depth())?;
+
+        Ok(())
         
     }
 
-    fn formatted_raw_bytes(f: &mut std::fmt::Formatter, rawbytes: &[u8], depth: i64) -> Result<(), Error> {
+    fn formatted_raw_bytes(f: &mut std::fmt::Formatter, rawbytes: &[u8], depth: i64) -> std::fmt::Result {
 
         for _ in 0..depth {
-            write!(f, "   ");
+            write!(f, "   ")?;
         }
 
         for i in 0..rawbytes.len() {
             let byte = rawbytes[i];
             // Print a space every 4 bytes for grouping
             if i % 4 == 0 && i % 32 != 0 {
-                write!(f, " ");
+                write!(f, " ")?;
             }
             // Print a new line every 32 bytes
             if i % 32 == 0 && i != 0 {
-                writeln!(f);
+                writeln!(f)?;
                 for _ in 0..depth {
                     write!(f, "   ")?;
                 }
             }
             // Print the byte as hex
-            write!(f, "{:02X} ", byte);
+            write!(f, "{:02X} ", byte)?;
         }
         // Print a final new line
-        writeln!(f)
+        write!(f, "\n")?;
+
+        Ok(())
 
     }
 
