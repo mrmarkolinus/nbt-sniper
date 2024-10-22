@@ -7,7 +7,7 @@ fn read_region_file() {
 
     for chunk in region_file.chunks() {
         println!("-------------------------");
-        println!("Offset: {}", chunk.offset());
+        println!("Offset: {:X}", chunk.offset());
         println!("Size: {}", chunk.size());
     }
 }
