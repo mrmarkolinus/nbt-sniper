@@ -434,7 +434,6 @@ impl NbtTag {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct NbtData {
     tags: Vec<NbtTag>,

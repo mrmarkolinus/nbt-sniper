@@ -87,7 +87,6 @@ fn test_bigtest_nbt_tags_names() {
                                 "",
                                 "",
                             "",
-                        
                     "",
             "byteTest",
             "byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))",
@@ -106,53 +105,53 @@ fn test_bigtest_nbt_tags_types() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
 
     let nbt_tag_types = vec![
-        nbt::NbtTagId::Compound,                        // Level
-            nbt::NbtTagId::Long,                            // longTest
-            nbt::NbtTagId::Short,                           // shortTest
-            nbt::NbtTagId::String,                          // stringTest
-            nbt::NbtTagId::Float,                           // floatTest
-            nbt::NbtTagId::Int,                             // intTest
-            nbt::NbtTagId::Compound,                        // nested compound test
-                nbt::NbtTagId::Compound,                        // ham
-                    nbt::NbtTagId::String,                          // name
-                    nbt::NbtTagId::Float,                           // value
-                    nbt::NbtTagId::End,                             //
-                nbt::NbtTagId::Compound,                        // egg
-                    nbt::NbtTagId::String,                          // name
-                    nbt::NbtTagId::Float,                           // value
-                    nbt::NbtTagId::End,                             //
-                nbt::NbtTagId::End,                             //
-            nbt::NbtTagId::List,                            // listTest (long)
-                nbt::NbtTagId::Long,                            //
-                nbt::NbtTagId::Long,                            //
-                nbt::NbtTagId::Long,                            //
-                nbt::NbtTagId::Long,                            //
-                nbt::NbtTagId::Long,                            //
-            nbt::NbtTagId::List,                            // listTest (compound)
-                nbt::NbtTagId::Compound,                        //
-                    nbt::NbtTagId::String,                          // name
-                    nbt::NbtTagId::Long,                            // created-on
-                    nbt::NbtTagId::End,                             //
-                nbt::NbtTagId::Compound,                        //
-                    nbt::NbtTagId::String,                          // name
-                    nbt::NbtTagId::Long,                            // created-on
-                    nbt::NbtTagId::List,                            // ListCompoundListTest
-                        nbt::NbtTagId::Compound,                        //
-                            nbt::NbtTagId::Float,                           // F1
-                            nbt::NbtTagId::Byte,                            // B1
-                            nbt::NbtTagId::End,                             //
-                        nbt::NbtTagId::Compound,                        //
-                            nbt::NbtTagId::Int,                             // 56
-                            nbt::NbtTagId::Long,                            // 42
-                            nbt::NbtTagId::List,                            // ListCompoundListCompoundListTest
-                                nbt::NbtTagId::ByteArray,                       //
-                                nbt::NbtTagId::ByteArray,                       //       
-                            nbt::NbtTagId::End,                             //
-                    nbt::NbtTagId::End,                             //
-            nbt::NbtTagId::Byte,                            // byteTest
-            nbt::NbtTagId::ByteArray,                       // byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))
-            nbt::NbtTagId::Double,                          // doubleTest
-            nbt::NbtTagId::End,                             //
+        nbt::NbtTagId::Compound,  // Level
+        nbt::NbtTagId::Long,      // longTest
+        nbt::NbtTagId::Short,     // shortTest
+        nbt::NbtTagId::String,    // stringTest
+        nbt::NbtTagId::Float,     // floatTest
+        nbt::NbtTagId::Int,       // intTest
+        nbt::NbtTagId::Compound,  // nested compound test
+        nbt::NbtTagId::Compound,  // ham
+        nbt::NbtTagId::String,    // name
+        nbt::NbtTagId::Float,     // value
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::Compound,  // egg
+        nbt::NbtTagId::String,    // name
+        nbt::NbtTagId::Float,     // value
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::List,      // listTest (long)
+        nbt::NbtTagId::Long,      //
+        nbt::NbtTagId::Long,      //
+        nbt::NbtTagId::Long,      //
+        nbt::NbtTagId::Long,      //
+        nbt::NbtTagId::Long,      //
+        nbt::NbtTagId::List,      // listTest (compound)
+        nbt::NbtTagId::Compound,  //
+        nbt::NbtTagId::String,    // name
+        nbt::NbtTagId::Long,      // created-on
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::Compound,  //
+        nbt::NbtTagId::String,    // name
+        nbt::NbtTagId::Long,      // created-on
+        nbt::NbtTagId::List,      // ListCompoundListTest
+        nbt::NbtTagId::Compound,  //
+        nbt::NbtTagId::Float,     // F1
+        nbt::NbtTagId::Byte,      // B1
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::Compound,  //
+        nbt::NbtTagId::Int,       // 56
+        nbt::NbtTagId::Long,      // 42
+        nbt::NbtTagId::List,      // ListCompoundListCompoundListTest
+        nbt::NbtTagId::ByteArray, //
+        nbt::NbtTagId::ByteArray, //
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::End,       //
+        nbt::NbtTagId::Byte,      // byteTest
+        nbt::NbtTagId::ByteArray, // byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))
+        nbt::NbtTagId::Double,    // doubleTest
+        nbt::NbtTagId::End,       //
     ];
 
     for (ii, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
@@ -166,53 +165,53 @@ fn test_bigtest_nbt_tags_depth() {
     let mc_bin = NbtFile::read("tests/files/bigtest.nbt".to_string());
 
     let nbt_tag_types = vec![
-        0,                              // Level
-            1,                              // longTest
-            1,                              // shortTest
-            1,                              // stringTest
-            1,                              // floatTest
-            1,                              // intTest
-            1,                              // nested compound test
-                2,                              // ham
-                    3,                              // name
-                    3,                              // value
-                    3,                              //
-                2,                              // egg
-                    3,                              // name
-                    3,                              // value
-                    3,                              //
-                2,                              //
-            1,                              // listTest (long)
-                2,                              //
-                2,                              //
-                2,                              //
-                2,                              //
-                2,                              //
-            1,                              // listTest (compound)
-                2,                              //
-                    3,                              // name
-                    3,                              // created-on
-                    3,                              //
-                2,                              //
-                    3,                              // name
-                    3,                            // created-on
-                    3,                            // ListCompoundListTest
-                        4,                          //
-                            5,                          // F1
-                            5,                          // B1
-                            5,                          //
-                        4,                          //
-                            5,                          // 56
-                            5,                          // 42
-                            5,                          // ListCompoundListCompoundListTest
-                                6,                          //
-                                6,                          //       
-                            5,                          //
-                    3,                          //
-            1,                              // byteTest
-            1,                              // byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))
-            1,                              // doubleTest
-            1,                              //
+        0, // Level
+        1, // longTest
+        1, // shortTest
+        1, // stringTest
+        1, // floatTest
+        1, // intTest
+        1, // nested compound test
+        2, // ham
+        3, // name
+        3, // value
+        3, //
+        2, // egg
+        3, // name
+        3, // value
+        3, //
+        2, //
+        1, // listTest (long)
+        2, //
+        2, //
+        2, //
+        2, //
+        2, //
+        1, // listTest (compound)
+        2, //
+        3, // name
+        3, // created-on
+        3, //
+        2, //
+        3, // name
+        3, // created-on
+        3, // ListCompoundListTest
+        4, //
+        5, // F1
+        5, // B1
+        5, //
+        4, //
+        5, // 56
+        5, // 42
+        5, // ListCompoundListCompoundListTest
+        6, //
+        6, //
+        5, //
+        3, //
+        1, // byteTest
+        1, // byteArrayTest (the first 1000 values of (n*n*255+n*7)%100, starting with n=0 (0, 62, 34, 16, 8, ...))
+        1, // doubleTest
+        1, //
     ];
 
     for (ii, nbttag) in mc_bin.nbt_tags().iter().enumerate() {
