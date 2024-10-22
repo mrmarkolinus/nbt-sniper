@@ -44,6 +44,18 @@ impl RegionFile {
         }
     }
 
+    pub fn chunks(&self) -> &Vec<Chunk> {
+        &self.chunks
+    }
+
+    pub fn num_chunks(&self) -> u32 {
+        self.num_chunks
+    }
+
+    pub fn file_path(&self) -> &str {
+        &self.file_path
+    }
+
     pub fn read(file_path: String) -> Self {
         let buffer = Self::read_file(&file_path).unwrap();
         let region_chunks = match Self::read_header(&buffer) {
@@ -59,7 +71,7 @@ impl RegionFile {
     }
 
     fn read_header(region_content: &[u8]) -> Result<Vec<Chunk>, RegionFileError> {      
-        if region_content.len() != HEADER_LENGTH {
+        if region_content.len() < HEADER_LENGTH {
             return Err(RegionFileError::HeaderLengthError);
         }
 
@@ -87,12 +99,10 @@ impl RegionFile {
         // Open the file and create a buffered reader for efficient reading
         let file = fs::File::open(file_path)?;
 
-        let buf_reader = BufReader::new(file);
-        let mut decoder = GzDecoder::new(buf_reader);
-        let mut decompressed_data = Vec::new();
-
-        decoder.read_to_end(&mut decompressed_data)?;
-        Ok(decompressed_data)
+        let mut buf_reader = BufReader::new(file);
+        let mut raw_data = Vec::new();
+        buf_reader.read_to_end(&mut raw_data)?;
+        Ok(raw_data)
     }
 }
 
@@ -113,6 +123,10 @@ impl Chunk {
 
     pub fn offset(&self) -> u32 {
         self.offset
+    }
+
+    pub fn size(&self) -> u32 {
+        self.size
     }
 
     pub fn data(&self) -> &nbt::NbtData {
