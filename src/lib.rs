@@ -9,7 +9,7 @@ use thiserror::Error;
 
 mod fmt;
 pub mod nbt;
-
+pub mod region;
 
 #[derive(Error, Debug)]
 pub enum NbtFileError {

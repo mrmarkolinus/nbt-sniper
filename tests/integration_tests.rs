@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use nbtsniper::{nbt, NbtFile};
 
 #[test]
