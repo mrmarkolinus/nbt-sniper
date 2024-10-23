@@ -24,13 +24,15 @@ struct Dimension {
 
 impl World {
     pub fn read(path: PathBuf) -> World {
+        
+        
         World {
             path,
             dimensions: vec![],
         }
     }
 
-    fn read_world_directory(world_path: PathBuf) -> bool {
+    fn read_world_directory(world_path: PathBuf) -> (Vec<Dimension>, bool) {
         let mut valid_minecraft_world = true;
 
         let mut overworld_regions = Vec::<region::RegionFile>::new();
@@ -60,7 +62,23 @@ impl World {
                 Self::read_region_directory(end_region_path, &mut end_regions);
             }
         }
-        valid_minecraft_world
+
+        let dimensions = vec![
+            Dimension {
+                location: DimensionType::Overworld,
+                region_files: overworld_regions,
+            },
+            Dimension {
+                location: DimensionType::Nether,
+                region_files: nether_regions,
+            },
+            Dimension {
+                location: DimensionType::End,
+                region_files: end_regions,
+            },
+        ];
+
+        (dimensions,valid_minecraft_world)
     }
 
     fn read_region_directory(region_path: PathBuf, regions: &mut Vec<region::RegionFile>) -> std::io::Result<()> {
