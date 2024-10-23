@@ -7,6 +7,7 @@ use std::fs;
 use std::io::BufReader;
 use std::io::Read;
 use thiserror::Error;
+use std::path::{Path, PathBuf};
 
 use crate::{nbt, NbtFileError};
 
@@ -61,13 +62,13 @@ impl CompressionType {
 }
 
 pub struct RegionFile {
-    file_path: String,
+    file_path: PathBuf,
     num_chunks: u32,
     chunks: Vec<Chunk>,
 }
 
 impl RegionFile {
-    pub fn new(file_path: String) -> RegionFile {
+    pub fn new(file_path: PathBuf) -> RegionFile {
         RegionFile {
             file_path,
             num_chunks: 0,
@@ -83,11 +84,11 @@ impl RegionFile {
         self.num_chunks
     }
 
-    pub fn file_path(&self) -> &str {
+    pub fn file_path(&self) -> &Path {
         &self.file_path
     }
 
-    pub fn read(file_path: String) -> Self {
+    pub fn read(file_path: PathBuf) -> Self {
         let buffer = Self::read_file(&file_path).unwrap();
         let mut region_chunks = match Self::read_header(&buffer) {
             Ok(chunks) => chunks,
@@ -209,7 +210,7 @@ impl RegionFile {
         }
     }
 
-    fn read_file(file_path: &str) -> std::io::Result<Vec<u8>> {
+    fn read_file(file_path: &Path) -> std::io::Result<Vec<u8>> {
         // Open the file and create a buffered reader for efficient reading
         let file = fs::File::open(file_path)?;
 
