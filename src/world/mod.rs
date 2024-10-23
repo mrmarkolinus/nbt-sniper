@@ -25,10 +25,11 @@ struct Dimension {
 impl World {
     pub fn read(path: PathBuf) -> World {
         
-        
+        let (world_dimensions,valid_minecraft_world) = Self::read_world_directory(path.clone());
+
         World {
             path,
-            dimensions: vec![],
+            dimensions: world_dimensions,
         }
     }
 
