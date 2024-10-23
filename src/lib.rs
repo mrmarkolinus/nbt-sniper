@@ -5,8 +5,8 @@ use std::fmt::Debug;
 use std::fs;
 use std::io::BufReader;
 use std::io::Read;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
-use std::path::{PathBuf, Path};
 
 mod fmt;
 pub mod nbt;

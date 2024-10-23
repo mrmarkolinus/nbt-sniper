@@ -25,7 +25,7 @@ pub enum RegionFileError {
     InvalidChunkHeaderLenght,
 
     #[error("Unsupported Compression Type")]
-    UnsupportedCompressionType
+    UnsupportedCompressionType,
 }
 
 const HEADER_LENGTH: usize = 4096;
@@ -104,51 +104,55 @@ impl RegionFile {
     }
 
     fn read_chunks(buffer: &[u8], chunks: &mut Vec<Chunk>) -> Result<(), RegionFileError> {
-        
         for (chunk_index, chunk) in chunks.iter_mut().enumerate() {
-            
             if (chunk.offset() > 0) && (chunk.size() > 0) {
-                let chunk_start_byte = chunk.offset() as usize;//(chunk.offset() * CHUNK_SIZE_MULTIPLIER) as usize;
+                let chunk_start_byte = chunk.offset() as usize; //(chunk.offset() * CHUNK_SIZE_MULTIPLIER) as usize;
                 let chunk_end_byte = chunk_start_byte + chunk.size() as usize;
                 let chunk_raw_bytes = &buffer[chunk_start_byte..chunk_end_byte];
-                
+
                 let chunk_uncompressed_raw_bytes = Self::decode_chunk(chunk_raw_bytes)?;
-                
+
                 match nbt::NbtData::from_buf(chunk_uncompressed_raw_bytes) {
                     Ok(nbt_data) => {
                         chunk.set_data(nbt_data);
                     }
                     Err(e) => {
-                        return Err(RegionFileError::UnsupportedCompressionType); //TODO CHANGE ERROR
+                        return Err(RegionFileError::UnsupportedCompressionType);
+                        //TODO CHANGE ERROR
                     }
                 }
-                
             }
-            
         }
 
         Ok(())
     }
 
     fn decode_chunk(chunk_raw_bytes: &[u8]) -> Result<Vec<u8>, RegionFileError> {
-        
         if chunk_raw_bytes.len() < CHUNK_HEADER_LENGTH {
             return Err(RegionFileError::InvalidChunkHeaderLenght);
         }
-        
-            let chunk_length = u32::from_be_bytes([chunk_raw_bytes[0], chunk_raw_bytes[1], chunk_raw_bytes[2], chunk_raw_bytes[3]]);
-            
-            let chunk_compression_method = &chunk_raw_bytes[CHUNK_HEADER_COMPRESSION];
-            let compressed_chunk_payload = &chunk_raw_bytes[CHUNK_PAYLOAD_START..CHUNK_PAYLOAD_START + chunk_length as usize];
 
-            let uncompressed_chunk_payload = Self::unzip_chunk(compressed_chunk_payload, chunk_compression_method.clone())?;
+        let chunk_length = u32::from_be_bytes([
+            chunk_raw_bytes[0],
+            chunk_raw_bytes[1],
+            chunk_raw_bytes[2],
+            chunk_raw_bytes[3],
+        ]);
 
-            Ok(uncompressed_chunk_payload)
-            
+        let chunk_compression_method = &chunk_raw_bytes[CHUNK_HEADER_COMPRESSION];
+        let compressed_chunk_payload =
+            &chunk_raw_bytes[CHUNK_PAYLOAD_START..CHUNK_PAYLOAD_START + chunk_length as usize];
+
+        let uncompressed_chunk_payload =
+            Self::unzip_chunk(compressed_chunk_payload, chunk_compression_method.clone())?;
+
+        Ok(uncompressed_chunk_payload)
     }
 
-    pub fn unzip_chunk( chunk_payload: &[u8], chunk_compression_method: u8) -> Result<Vec<u8>, RegionFileError> {
-        
+    pub fn unzip_chunk(
+        chunk_payload: &[u8],
+        chunk_compression_method: u8,
+    ) -> Result<Vec<u8>, RegionFileError> {
         let mut chunk_decompressed_payload = Vec::new();
 
         // Decompress chunk data
@@ -158,24 +162,28 @@ impl RegionFile {
             Some(CompressionType::Gzip) => {
                 // Gzip compression
                 let mut decoder = GzDecoder::new(chunk_payload);
-                decoder.read_to_end(&mut chunk_decompressed_payload).map_err( |_| RegionFileError::UnsupportedCompressionType )?;
-            },
-            Some(CompressionType::Zlib) => { 
+                decoder
+                    .read_to_end(&mut chunk_decompressed_payload)
+                    .map_err(|_| RegionFileError::UnsupportedCompressionType)?;
+            }
+            Some(CompressionType::Zlib) => {
                 // Zlib compression
                 let mut decoder = ZlibDecoder::new(chunk_payload);
-                decoder.read_to_end(&mut chunk_decompressed_payload).map_err( |_| RegionFileError::UnsupportedCompressionType )?;
-            },
+                decoder
+                    .read_to_end(&mut chunk_decompressed_payload)
+                    .map_err(|_| RegionFileError::UnsupportedCompressionType)?;
+            }
             Some(CompressionType::Uncompressed) => {
                 // Data is uncompressed
                 chunk_decompressed_payload = chunk_payload.to_vec();
-            },
+            }
             _ => return Err(RegionFileError::UnsupportedCompressionType),
         }
 
         Ok(chunk_decompressed_payload)
     }
 
-    fn read_header(region_content: &[u8]) -> Result<Vec<Chunk>, RegionFileError> {      
+    fn read_header(region_content: &[u8]) -> Result<Vec<Chunk>, RegionFileError> {
         if region_content.len() < HEADER_LENGTH {
             return Err(RegionFileError::HeaderLengthError);
         }
@@ -190,7 +198,8 @@ impl RegionFile {
     }
 
     fn parse_chunk_position_and_size(chunk_info: &[u8]) -> Chunk {
-        let offset = u32::from_be_bytes([chunk_info[0], chunk_info[1], chunk_info[2], 0]) << CHUNK_OFFSET_BITSHIFT;
+        let offset = u32::from_be_bytes([chunk_info[0], chunk_info[1], chunk_info[2], 0])
+            << CHUNK_OFFSET_BITSHIFT;
         let size = u32::from(chunk_info[3]) * CHUNK_SIZE_MULTIPLIER;
 
         Chunk {
