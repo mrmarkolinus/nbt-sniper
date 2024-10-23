@@ -1,6 +1,7 @@
 use crate::nbt;
 use crate::region;
 use std::path::{Path, PathBuf};
+use log::{info, error};
 
 const REGION_PATH: &str = "region";
 const NETHER_PATH: &str = "DIM-1";
@@ -12,7 +13,7 @@ enum DimensionType {
     End,
 }
 
-struct World {
+pub struct World {
     path: PathBuf,
     dimensions: Vec<Dimension>,
 }
@@ -88,6 +89,7 @@ impl World {
             Ok(entries) => {
                 for entry in entries {
                     if let Ok(entry) = entry {
+                        info!("Reading region file {entry:?}");
                         regions.push(region::RegionFile::read(entry.path()));     
                     }
                 }

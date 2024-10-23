@@ -142,7 +142,7 @@ impl RegionFile {
 
         let chunk_compression_method = &chunk_raw_bytes[CHUNK_HEADER_COMPRESSION];
         let compressed_chunk_payload =
-            &chunk_raw_bytes[CHUNK_PAYLOAD_START..CHUNK_PAYLOAD_START + chunk_length as usize];
+            &chunk_raw_bytes[CHUNK_PAYLOAD_START..CHUNK_PAYLOAD_START + (chunk_length - 1) as usize];
 
         let uncompressed_chunk_payload =
             Self::unzip_chunk(compressed_chunk_payload, chunk_compression_method.clone())?;
